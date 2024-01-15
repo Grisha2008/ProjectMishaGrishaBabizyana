@@ -71,8 +71,8 @@ y = HIGHT / 2
 # здесь происходит инициация, создание объектов и др.
 screen_game = pygame.display.set_mode((WIDTH, HIGHT))
 # музыка
-shooting_sound = pygame.mixer.Sound('data/shoot.wav')
-shooting_sound.set_volume(0.1)
+shooting_sound = pygame.mixer.Sound('korotkiy-moschnyiy-zamah.mp3')
+shooting_sound.set_volume(1)
 # название приложения
 pygame.display.set_caption('Лучшая игра')
 # Все спрайты
@@ -208,7 +208,6 @@ class Hero(pygame.sprite.Sprite):
                  elif schet_anim == 5:
                      self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 13.png'), (80, 80))
 
-
 # evil
 evil_group = pygame.sprite.Group()
 
@@ -258,76 +257,17 @@ class Evil(pygame.sprite.Sprite):
 
 class Chest(pygame.sprite.Sprite):
     pass
-# bullet
-bullet_group = pygame.sprite.Group()
-
-class Bullet(pygame.sprite.Sprite):
-    image = pygame.transform.scale(pygame.image.load('data/hero.png'), (10, 10))
-
-    def __init__(self, pos, finpos):
-        super().__init__(all_sprites)
-        self.add(bullet_group)
-        self.image = Bullet.image
-        self.rect = self.image.get_rect()
-        self.mask = pygame.mask.from_surface(self.image)
-        self.rect.x = pos[0]
-        self.rect.y = pos[1]
-        self.finpos = finpos
-        self.kx = self.finpos[0] - self.rect.x
-        self.ky = self.finpos[1] - self.rect.y
-
-    def update(self):
-        pk = pygame.key.get_pressed()
-        kx = self.kx
-        ky = self.ky
-        try:
-            if kx * ky != 0:
-                self.rect = self.rect.move(int((5 * kx / abs(kx)) * abs(kx / ky)),
-                                           int((5 * ky / abs(ky)) * abs(ky / kx)))
-        except:
-            pass
-        if pk[pygame.K_a]:
-            self.rect.x += SPEED
-        if pk[pygame.K_d]:
-            self.rect.x -= SPEED
-        if pk[pygame.K_w]:
-            self.rect.y += SPEED
-        if pk[pygame.K_s]:
-            self.rect.y -= SPEED
-        if pygame.sprite.spritecollideany(self, evil_group):
-            evil.evil_helth -= DAMAGE
-            self.kill()
-
-
 
 # border
 horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
-
-class Border(pygame.sprite.Sprite):
-    # строго вертикальный или строго горизонтальный отрезок
-    def __init__(self, x1, y1, x2, y2):
-        super().__init__(all_sprites)
-        if x1 == x2:  # вертикальная стенка
-            self.add(vertical_borders)
-            self.image = pygame.Surface([1, y2 - y1])
-            self.rect = pygame.Rect(x1, y1, 1, y2 - y1)
-        else:  # горизонтальная стенка
-            self.add(horizontal_borders)
-            self.image = pygame.Surface([x2 - x1, 1])
-            self.rect = pygame.Rect(x1, y1, x2 - x1, 1)
-
-
-Border(5, 5, WIDTH - 5, 5)
-Border(5, HIGHT - 5, WIDTH - 5, HIGHT - 5)
-Border(5, 5, 5, HIGHT - 5)
-Border(WIDTH - 5, 5, WIDTH - 5, HIGHT - 5)
 play = False
 evil = Evil(250)
 hero = Hero(100)
 schet_fps = 0
 schet_anim = 0
+schet_kick = 0
 
 # главный цикл
 while running:
@@ -338,9 +278,9 @@ while running:
             if event.type == pygame.QUIT:
                 running = False
                 play = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                shooting_sound.play()
-                Bullet((hero.rect.x, hero.rect.y), event.pos)
+            if event.type == pygame.MOUSEBUTTONDOWN and not pygame.mixer.get_busy():
+                if event.button == 1:
+                    shooting_sound.play()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     play = False
@@ -389,7 +329,7 @@ while running:
                     running = False
                 elif event.ui_element == play_button:
                     play = True
-                    pygame.mixer.music.load('data/zxc.mp3')
+                    pygame.mixer.music.load('PlayArrow_-_Chipi-Chipi-Chapa-Chapa_77099952.mp3')
                     pygame.mixer.music.play(-1)
 
             if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
