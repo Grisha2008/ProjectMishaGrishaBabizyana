@@ -59,6 +59,23 @@ def text(screen, text1):
     text_y = y
     screen.blit(text, (text_x, text_y))
 
+def get_animation(sheet, width, hieght, x, y):
+    image = pygame.Surface((width, hieght), pygame.SRCALPHA)
+    image.blit(sheet, (0, 0), (x, y, width, hieght))
+    image = pygame.transform.scale(image, (144, 144))
+    return image
+
+def move_other(x, y):
+    pk = pygame.key.get_pressed()
+    if pk[pygame.K_a]:
+        x += SPEED
+    if pk[pygame.K_d]:
+        x -= SPEED
+    if pk[pygame.K_w]:
+        y += SPEED
+    if pk[pygame.K_s]:
+        y -= SPEED
+    return x, y
 
 # здесь определяются константы, классы и функции
 FPS = 20
@@ -81,7 +98,7 @@ all_sprites = pygame.sprite.Group()
 
 # hero
 class Hero(pygame.sprite.Sprite):
-    image = pygame.transform.scale(pygame.image.load('Player/Стоит смотрит/Слой 2.png'), (80, 80))
+    image = get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, 0, 0)
 
     def __init__(self, hero_helth_max):
         super().__init__(all_sprites)
@@ -90,130 +107,47 @@ class Hero(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.hero_helth = hero_helth_max
         self.hero_helth_max = hero_helth_max
-        self.rect.x = x - 80
-        self.rect.y = y
+        self.rect.x = x - 100
+        self.rect.y = y - 100
         self.static = 0
+        self.animations = []
+        self.attack = 0
+        for i in range(3, 7):
+            self.animations.append(
+                [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, i * 48) for j in range(6)])
+        self.animations.append(
+            [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, 48) for j in range(1)])
+        self.animations[3] = self.animations[1].copy()
+        for i in range(len(self.animations[3])):
+            self.animations[3][i] = pygame.transform.flip(self.animations[3][i], True, False)
+        self.attack_animations = []
+        for i in range(7, 9):
+            self.attack_animations.append(
+                [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, i * 48) for j in range(4)])
+        self.attack_animations.append([])
+        for i in range(len(self.attack_animations[0])):
+            self.attack_animations[-1].append(pygame.transform.flip(self.attack_animations[0][i], True, False))
+        self.attack_animations.append(
+            [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, 6 * 48) for j in range(4)])
+
+
+    def move(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE] and not self.attack:
+            self.is_attacking = True
 
     def update(self):
-        pk = pygame.key.get_pressed()
-        if pk[pygame.K_d]:
-            if schet_anim == 0:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 26.png'),(80, 80))
-            elif schet_anim == 1:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 27.png'),(80, 80))
-            elif schet_anim == 2:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 28.png'),(80, 80))
-            elif schet_anim == 3:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 29.png'),(80, 80))
-            elif schet_anim == 4:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 30.png'),(80, 80))
-            elif schet_anim == 5:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 31.png'),(80, 80))
-            self.static = 3
-        if pk[pygame.K_a]:
-            if schet_anim == 0:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 26.png'),(80, 80))
-            elif schet_anim == 1:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 27.png'),(80, 80))
-            elif schet_anim == 2:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 28.png'),(80, 80))
-            elif schet_anim == 3:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 29.png'),(80, 80))
-            elif schet_anim == 4:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 30.png'),(80, 80))
-            elif schet_anim == 5:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вбок/Слой 31.png'),(80, 80))
-            self.image = pygame.transform.flip(self.image, True, False)
-            self.static = 2
-        if pk[pygame.K_w]:
-            if schet_anim == 0:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Уходит((/Слой 32.png'),(80, 80))
-            elif schet_anim == 1:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Уходит((/Слой 33.png'),(80, 80))
-            elif schet_anim == 2:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Уходит((/Слой 34.png'),(80, 80))
-            elif schet_anim == 3:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Уходит((/Слой 35.png'),(80, 80))
-            elif schet_anim == 4:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Уходит((/Слой 36.png'),(80, 80))
-            elif schet_anim == 5:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Уходит((/Слой 37.png'),(80, 80))
-            self.static = 1
-        if pk[pygame.K_s]:
-            if schet_anim == 0:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вперед/Слой 20.png'),(80, 80))
-            elif schet_anim == 1:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вперед/Слой 21.png'),(80, 80))
-            elif schet_anim == 2:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вперед/Слой 22.png'),(80, 80))
-            elif schet_anim == 3:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вперед/Слой 23.png'),(80, 80))
-            elif schet_anim == 4:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вперед/Слой 24.png'),(80, 80))
-            elif schet_anim == 5:
-                self.image = pygame.transform.scale(pygame.image.load('Player/Идет вперед/Слой 25.png'),(80, 80))
-            self.static = 0
-        if not pk[pygame.K_s] and not pk[pygame.K_w] and not pk[pygame.K_a] and not pk[pygame.K_d]:
-             if self.static == 0:
-                 if schet_anim == 0:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Стоит смотрит/Слой 2.png'), (80, 80))
-                 elif schet_anim == 1:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Стоит смотрит/Слой 3.png'), (80, 80))
-                 elif schet_anim == 2:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Стоит смотрит/Слой 4.png'), (80, 80))
-                 elif schet_anim == 3:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Стоит смотрит/Слой 5.png'), (80, 80))
-                 elif schet_anim == 4:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Стоит смотрит/Слой 6.png'), (80, 80))
-                 elif schet_anim == 5:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Стоит смотрит/Слой 7.png'), (80, 80))
-             if self.static == 1:
-                 if schet_anim == 0:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Отвернулся Гадина/Слой 14.png'), (80, 80))
-                 elif schet_anim == 1:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Отвернулся Гадина/Слой 15.png'), (80, 80))
-                 elif schet_anim == 2:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Отвернулся Гадина/Слой 16.png'), (80, 80))
-                 elif schet_anim == 3:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Отвернулся Гадина/Слой 17.png'), (80, 80))
-                 elif schet_anim == 4:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Отвернулся Гадина/Слой 18.png'), (80, 80))
-                 elif schet_anim == 5:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Отвернулся Гадина/Слой 19.png'), (80, 80))
-             if self.static == 2:
-                 if schet_anim == 0:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 8.png'), (80, 80))
-                 elif schet_anim == 1:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 9.png'), (80, 80))
-                 elif schet_anim == 2:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 10.png'), (80, 80))
-                 elif schet_anim == 3:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 11.png'), (80, 80))
-                 elif schet_anim == 4:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 12.png'), (80, 80))
-                 elif schet_anim == 5:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 13.png'), (80, 80))
-                 self.image = pygame.transform.flip(self.image, True, False)
-             if self.static == 3:
-                 if schet_anim == 0:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 8.png'), (80, 80))
-                 elif schet_anim == 1:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 9.png'), (80, 80))
-                 elif schet_anim == 2:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 10.png'), (80, 80))
-                 elif schet_anim == 3:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 11.png'), (80, 80))
-                 elif schet_anim == 4:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 12.png'), (80, 80))
-                 elif schet_anim == 5:
-                     self.image = pygame.transform.scale(pygame.image.load('Player/Смотрит вбок/Слой 13.png'), (80, 80))
+        self.move()
+
+    def collision(self):
+        pass
 
 # evil
 evil_group = pygame.sprite.Group()
 
 
 class Evil(pygame.sprite.Sprite):
-    image = pygame.transform.scale(pygame.image.load('Мобы/monster_demon.png'), (100, 100))
+    image = pygame.transform.scale(pygame.image.load('Mobs/monster_demon.png'), (100, 100))
 
     def __init__(self, evil_helth_max):
         super().__init__(all_sprites)
@@ -228,7 +162,6 @@ class Evil(pygame.sprite.Sprite):
         self.rect.y = y
 
     def update(self):
-        pk = pygame.key.get_pressed()
         if hero.rect.y > self.rect.y:
             self.rect.y += 4
         elif hero.rect.y < self.rect.y:
@@ -245,14 +178,8 @@ class Evil(pygame.sprite.Sprite):
                 self.direction = "right"
         if self.evil_helth <= 0:
             self.kill()
-        if pk[pygame.K_a]:
-            self.rect.x += SPEED
-        if pk[pygame.K_d]:
-            self.rect.x -= SPEED
-        if pk[pygame.K_w]:
-            self.rect.y += SPEED
-        if pk[pygame.K_s]:
-            self.rect.y -= SPEED
+        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
+
 
 
 class Chest(pygame.sprite.Sprite):
@@ -295,7 +222,7 @@ while running:
                 play = False
         # Hit bar героя
         pygame.draw.rect(screen_game, (0, 200, 0),
-                         (hero.rect.x - 55, hero.rect.y - 35, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
+                         (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
         # Hit bar злодея
         if evil.evil_helth >= 0:
             pygame.draw.rect(screen_game, (255 - evil.evil_helth, evil.evil_helth, 0), (
