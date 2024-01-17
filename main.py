@@ -51,6 +51,8 @@ fps_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((500, 400), (2
 
 running = True
 
+static = 1
+
 
 def text(screen, text1):
     font = pygame.font.SysFont('', 60)
@@ -109,9 +111,18 @@ class Hero(pygame.sprite.Sprite):
         self.hero_helth_max = hero_helth_max
         self.rect.x = x - 100
         self.rect.y = y - 100
-        self.static = 0
         self.animations = []
         self.attack = 0
+        self.attack_animations = []
+        self.static_animations = []
+        for i in range(3):
+            self.static_animations.append(
+                [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, i * 48) for j in range(6)])
+        self.static_animations.append(
+            [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, 48) for j in range(1)])
+        self.static_animations[3] = self.static_animations[1].copy()
+        for i in range(len(self.static_animations[3])):
+            self.static_animations[3][i] = pygame.transform.flip(self.static_animations[3][i], True, False)
         for i in range(3, 7):
             self.animations.append(
                 [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, i * 48) for j in range(6)])
@@ -120,7 +131,6 @@ class Hero(pygame.sprite.Sprite):
         self.animations[3] = self.animations[1].copy()
         for i in range(len(self.animations[3])):
             self.animations[3][i] = pygame.transform.flip(self.animations[3][i], True, False)
-        self.attack_animations = []
         for i in range(7, 9):
             self.attack_animations.append(
                 [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, i * 48) for j in range(4)])
@@ -135,12 +145,17 @@ class Hero(pygame.sprite.Sprite):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and not self.attack:
             self.is_attacking = True
+        if not keys[pygame.K_a] and not keys[pygame.K_d] and not keys[pygame.K_w] and not keys[pygame.K_s]:
+            self.image = self.static_animations[static][schet_anim]
+            print(1)
+        else:
+            print(2)
+            self.image = self.animations[static][schet_anim]
 
     def update(self):
         self.move()
 
-    def collision(self):
-        pass
+
 
 # evil
 evil_group = pygame.sprite.Group()
@@ -214,6 +229,15 @@ while running:
                     pygame.mixer.music.load('Music.mp3')
                     pygame.mixer.music.play(-1)
                     vol = 0.1
+                if event.key == pygame.K_a:
+                    static = 3
+                if event.key == pygame.K_d:
+                    static = 1
+                if event.key == pygame.K_w:
+                    static = 2
+                if event.key == pygame.K_s:
+                    static = 0
+
         # background
         screen_game.fill((255, 255, 255))
         if not True:
