@@ -1,6 +1,7 @@
 import pygame
 import pygame_gui
-import Board_Create
+import random
+import numpy as np
 
 pygame.init()
 pygame.mixer.init()
@@ -52,7 +53,33 @@ fps_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((500, 400), (2
 running = True
 
 static = 1
+def create_matrix_with_path():
+    matrix = np.zeros((10, 10), dtype=int)
+    start_row, start_col = 0, 0
+    matrix[start_row, start_col] = 1
+    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+    ones_count = 1
+    current_row, current_col = start_row, start_col
+    path = [(current_row, current_col)]
+    while ones_count < 25:
+        possible_neighbors = []
+        for dr, dc in directions:
+            new_row, new_col = current_row + dr, current_col + dc
+            if 0 <= new_row < 10 and 0 <= new_col < 10 and matrix[new_row, new_col] == 0:
+                neighbor_count = sum([matrix[new_row + nr, new_col + nc] for nr, nc in directions if 0 <= new_row + nr < 10 and 0 <= new_col + nc < 10])
+                if neighbor_count < 2 or len(path) == 1:
+                    possible_neighbors.append((new_row, new_col))
+        if not possible_neighbors:
+            break
+        next_row, next_col = random.choice(possible_neighbors)
+        matrix[next_row, next_col] = 1
+        current_row, current_col = next_row, next_col
+        ones_count += 1
+        path.append((current_row, current_col))
 
+    return matrix
+matrix_with_path = create_matrix_with_path()
+print(matrix_with_path)
 
 def text(screen, text1):
     font = pygame.font.SysFont('', 60)
@@ -147,9 +174,7 @@ class Hero(pygame.sprite.Sprite):
             self.is_attacking = True
         if not keys[pygame.K_a] and not keys[pygame.K_d] and not keys[pygame.K_w] and not keys[pygame.K_s]:
             self.image = self.static_animations[static][schet_anim]
-            print(1)
         else:
-            print(2)
             self.image = self.animations[static][schet_anim]
 
     def update(self):
