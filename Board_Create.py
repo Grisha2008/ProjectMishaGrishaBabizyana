@@ -1,67 +1,42 @@
+import numpy as np
 import random
-import pygame
 
-TestBoard = [[2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+# Определение параметров матрицы и направлений для BFS
+matrix = np.zeros((10, 10), dtype=int)
+center_coords = [(4, 4), (4, 5), (5, 4), (5, 5)] # Центральные клетки
+directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+num_ones = random.randint(10, 20)
 
-class Board:
-    def __init__(self, Board):
-        self.size = 10
-        self.board = Board
-        self.left = 10
-        self.top = 10
-        self.cell_size = 100
+# Функция для проверки пути до центра
+def is_path_to_center(matrix, center_coords):
+    visited = set()
+    for i in range(10):
+        for j in range(10):
+            if matrix[i][j] == 0 and (i, j) not in visited:
+                queue = [(i, j)]
+                path_to_center = False
+                while queue:
+                    x, y = queue.pop(0)
+                    if (x, y) in center_coords:
+                        path_to_center = True
+                        break
+                    visited.add((x, y))
+                    for dx, dy in directions:
+                        nx, ny = x + dx, y + dy
+                        if 0 <= nx < 10 and 0 <= ny < 10 and matrix[nx][ny] == 0 and (nx, ny) not in visited:
+                            queue.append((nx, ny))
+                if not path_to_center:
+                    return False
+    return True
 
-
-    def set_view(self, left, top, cell_size):
-        self.left = left
-        self.top = top
-        self.cell_size = cell_size
-
-    def is_path_available(self, start, end):
-        # Поиск в ширину для проверки пути
-        queue = [start]
-        visited = set()
-        while queue:
-            x, y = queue.pop(0)
-            if (x, y) == end:
-                return True
-            visited.add((x, y))
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:  # Соседние клетки
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < self.size and 0 <= ny < self.size and (nx, ny) not in visited and self.board[ny][nx] == 0:
-                    queue.append((nx, ny))
-        return False
-
-    def render(self):
-        while sum(row.count(1) for row in self.board) < random.randint(20, 81):
-            x, y = random.randint(0, self.size - 1), random.randint(0, self.size - 1)
-            if (x, y) != (0, 0) and (x, y) != (9, 9):  # Исключаем левый верхний угол
-                original_value = self.board[y][x]
-                self.board[y][x] = 1
-                if not self.is_path_available((0, 0), (self.size - 1, self.size - 1)):
-                    self.board[y][x] = original_value  # Восстанавливаем, если путь блокирован
-        return self.board
-
-    def get_cell(self, mouse_pos):
-        cell_x = (mouse_pos[0] - self.left) // self.cell_size
-        cell_y = (mouse_pos[1] - self.top) // self.cell_size
-        if 0 <= cell_x < self.size and 0 <= cell_y < self.size:
-            return cell_x, cell_y
-        return None
-
-    def on_click(self, cell_coords):
-        if cell_coords:
-            print("Click on cell:", cell_coords)
-
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        self.on_click(cell)
+# Генерация матрицы с исключением центральных клеток
+valid_matrix = False
+while not valid_matrix:
+    matrix = np.zeros((10, 10), dtype=int)
+    ones_placed = 0
+    while ones_placed < num_ones:
+        x, y = random.randint(0, 9), random.randint(0, 9)
+        if matrix[x][y] == 0 and (x, y) not in center_coords:
+            matrix[x][y] = 1
+            ones_placed += 1
+    valid_matrix = is_path_to_center(matrix, center_coords)

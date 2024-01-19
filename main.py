@@ -1,7 +1,6 @@
 import pygame
 import pygame_gui
-import random
-import numpy as np
+import Board_Create
 
 pygame.init()
 pygame.mixer.init()
@@ -53,33 +52,6 @@ fps_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((500, 400), (2
 running = True
 
 static = 1
-def create_matrix_with_path():
-    matrix = np.zeros((10, 10), dtype=int)
-    start_row, start_col = 0, 0
-    matrix[start_row, start_col] = 1
-    directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-    ones_count = 1
-    current_row, current_col = start_row, start_col
-    path = [(current_row, current_col)]
-    while ones_count < 25:
-        possible_neighbors = []
-        for dr, dc in directions:
-            new_row, new_col = current_row + dr, current_col + dc
-            if 0 <= new_row < 10 and 0 <= new_col < 10 and matrix[new_row, new_col] == 0:
-                neighbor_count = sum([matrix[new_row + nr, new_col + nc] for nr, nc in directions if 0 <= new_row + nr < 10 and 0 <= new_col + nc < 10])
-                if neighbor_count < 2 or len(path) == 1:
-                    possible_neighbors.append((new_row, new_col))
-        if not possible_neighbors:
-            break
-        next_row, next_col = random.choice(possible_neighbors)
-        matrix[next_row, next_col] = 1
-        current_row, current_col = next_row, next_col
-        ones_count += 1
-        path.append((current_row, current_col))
-
-    return matrix
-matrix_with_path = create_matrix_with_path()
-print(matrix_with_path)
 
 def text(screen, text1):
     font = pygame.font.SysFont('', 60)
@@ -123,7 +95,9 @@ shooting_sound.set_volume(1)
 pygame.display.set_caption('Лучшая игра')
 # Все спрайты
 all_sprites = pygame.sprite.Group()
+fullscreen = False
 
+Map = Board_Create.matrix
 
 # hero
 class Hero(pygame.sprite.Sprite):
@@ -170,8 +144,9 @@ class Hero(pygame.sprite.Sprite):
 
     def move(self):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE] and not self.attack:
-            self.is_attacking = True
+        if self.attack:
+            print(schet_attack_anim)
+            self.image = self.attack_animations[static][schet_attack_anim]
         if not keys[pygame.K_a] and not keys[pygame.K_d] and not keys[pygame.K_w] and not keys[pygame.K_s]:
             self.image = self.static_animations[static][schet_anim]
         else:
@@ -202,16 +177,16 @@ class Evil(pygame.sprite.Sprite):
         self.rect.y = y
 
     def update(self):
-        if hero.rect.y > self.rect.y:
+        if hero.rect.y > self.rect.y - 36:
             self.rect.y += 4
-        elif hero.rect.y < self.rect.y:
+        elif hero.rect.y < self.rect.y - 36:
             self.rect.y -= 4
-        if hero.rect.x > self.rect.x:
+        if hero.rect.x > self.rect.x - 32:
             self.rect.x += 4
             if self.direction != "left":
                 self.image = pygame.transform.flip(self.image, True, False)
                 self.direction = "left"
-        elif hero.rect.x < self.rect.x:
+        elif hero.rect.x < self.rect.x - 32:
             self.rect.x -= 4
             if self.direction != "right":
                 self.image = pygame.transform.flip(self.image, True, False)
@@ -220,6 +195,56 @@ class Evil(pygame.sprite.Sprite):
             self.kill()
         self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
 
+
+floor_group = pygame.sprite.Group()
+class floor(pygame.sprite.Sprite):
+    image = pygame.transform.scale(pygame.image.load('Map/Set 1.2.png'), (200, 200))
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.add(floor_group)
+        self.image = floor.image
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.x = x
+        self.rect.y = y
+
+    def update(self):
+        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
+
+wall_group = pygame.sprite.Group()
+class wall(pygame.sprite.Sprite):
+    image = pygame.transform.scale(pygame.image.load('Map/Set 1.png'), (200, 200))
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.add(floor_group)
+        self.image = wall.image
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect.x = x
+        self.rect.y = y
+
+    def update(self):
+        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
+
+# Создание экземпляров floor
+print(Map)
+for i in range(-2, 8):
+    for j in range(-3, 7):
+        if Map[j + 3][i + 2] == 0:
+            # Создаём экземпляр floor в каждой позиции (i, j)
+            new_floor = floor()
+            new_floor.rect.x = i * 200
+            new_floor.rect.y = j * 200
+            # Добавляем в группу спрайтов
+            floor_group.add(new_floor)
+        else:
+            new_wall = wall()
+            new_wall.rect.x = i * 200
+            new_wall.rect.y = j * 200
+            # Добавляем в группу спрайтов
+            wall_group.add(new_wall)
 
 
 class Chest(pygame.sprite.Sprite):
@@ -234,11 +259,15 @@ evil = Evil(250)
 hero = Hero(100)
 schet_fps = 0
 schet_anim = 0
-schet_kick = 0
+schet_attack_anim = 0
+schet_attack_fps = 1
+x_pos = 0
+y_pos = 0
 
 # главный цикл
 while running:
     if play:
+        pk = pygame.key.get_pressed()
         clock.tick(FPS)
         # цикл обработки событи
         for event in pygame.event.get():
@@ -248,20 +277,30 @@ while running:
             if event.type == pygame.MOUSEBUTTONDOWN and not pygame.mixer.get_busy():
                 if event.button == 1:
                     shooting_sound.play()
+                    hero.attack = True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     play = False
                     pygame.mixer.music.load('Music.mp3')
                     pygame.mixer.music.play(-1)
                     vol = 0.1
-                if event.key == pygame.K_a:
-                    static = 3
-                if event.key == pygame.K_d:
-                    static = 1
-                if event.key == pygame.K_w:
-                    static = 2
-                if event.key == pygame.K_s:
-                    static = 0
+                if event.key == pygame.K_F11:  # Переключение между полноэкранным и оконным режимами
+                    fullscreen = not fullscreen
+                    if fullscreen:
+                        window = pygame.display.set_mode(window_size, pygame.FULLSCREEN)
+                    else:
+                        window = pygame.display.set_mode(window_size)
+        if not pygame.mixer.get_busy():
+            hero.attack = False
+
+        if pk[pygame.K_a]:
+            static = 3
+        if pk[pygame.K_d]:
+            static = 1
+        if pk[pygame.K_w]:
+            static = 2
+        if pk[pygame.K_s]:
+            static = 0
 
         # background
         screen_game.fill((255, 255, 255))
@@ -269,24 +308,33 @@ while running:
             text(screen, 'You Win, press "F" to exit the game')
             if pk[pygame.K_f]:
                 play = False
-        # Hit bar героя
-        pygame.draw.rect(screen_game, (0, 200, 0),
-                         (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
-        # Hit bar злодея
-        if evil.evil_helth >= 0:
-            pygame.draw.rect(screen_game, (255 - evil.evil_helth, evil.evil_helth, 0), (
-            evil.rect.x - 90, evil.rect.y - 15, 300 - (evil.evil_helth_max - evil.evil_helth) * 300 // evil.evil_helth_max,
-            18))
 
         # обновление экрана
         all_sprites.update()
         all_sprites.draw(screen_game)
         schet_fps += 1
-        if schet_fps >= 2:
+        if schet_fps % 2 == 0:
             schet_anim += 1
-            schet_fps = 0
+        if hero.attack:
+            schet_attack_fps += 1
+        if schet_attack_fps % 3 == 0:
+            schet_attack_anim += 1
         if schet_anim >= 6:
             schet_anim = 0
+        if not pygame.mixer.get_busy():
+            hero.attack = False
+        if schet_attack_anim >= 4:
+            schet_attack_anim = 0
+        if not hero.attack:
+            schet_attack_anim = 0
+        pygame.draw.rect(screen_game, (0, 200, 0),
+                         (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
+        # Hit bar злодея
+        if evil.evil_helth >= 0:
+            pygame.draw.rect(screen_game, (255 - evil.evil_helth, evil.evil_helth, 0), (
+                evil.rect.x - 90, evil.rect.y - 15,
+                300 - (evil.evil_helth_max - evil.evil_helth) * 300 // evil.evil_helth_max,
+                18))
         pygame.display.update()
     else:
         time_delta = clock.tick(fps) / 1000.0
