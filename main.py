@@ -67,20 +67,22 @@ def get_animation(sheet, width, hieght, x, y):
     image = pygame.transform.scale(image, (144, 144))
     return image
 
-# Теперь объединим эту проверку с вашей функцией move_other
-def move_other(x, y):
-    pk = pygame.key.get_pressed()
-
-    if pk[pygame.K_a]:
-        x += SPEED
-    if pk[pygame.K_d]:
-        x -= SPEED
-    if pk[pygame.K_w]:
-        y += SPEED
-    if pk[pygame.K_s]:
-        y -= SPEED
-
-    return x, y
+# Ты долбаеб?
+#def move_other(x, y):
+#    pk = pygame.key.get_pressed()
+#
+#    if pk[pygame.K_a]:
+#        x += SPEED
+#    elif pk[pygame.K_d]:
+#        x -= SPEED
+#    elif pk[pygame.K_w]:
+#        y += SPEED
+#    elif pk[pygame.K_s]:
+#        y -= SPEED
+#
+#    
+#
+#    return x, y
 
 def get_distance(coords, coords1):
     return ((coords[0] - coords1[0]) ** 2 + (coords[1] - coords1[1]) ** 2) ** 0.5
@@ -107,11 +109,29 @@ fullscreen = False
 
 Map = Board_Create.matrix
 
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+        
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+    
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HIGHT // 2)
+
+camera = Camera()
+
 # hero
 class Hero(pygame.sprite.Sprite):
     image = get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, 0, 0)
 
-    def __init__(self, hero_helth_max):
+    def __init__(self, hero_helth_max, walls):
         super().__init__(all_sprites)
         self.image = Hero.image
         self.rect = self.image.get_rect()
@@ -122,6 +142,9 @@ class Hero(pygame.sprite.Sprite):
         self.rect.y = y - 100
         self.animations = []
         self.attack = 0
+        self.walls = walls
+        self.dx = 0
+        self.dy = 0
         self.attack_animations = []
         self.static_animations = []
         for i in range(3):
@@ -162,10 +185,40 @@ class Hero(pygame.sprite.Sprite):
         else:
             self.image = self.animations[static][schet_anim]
 
+    def movement(self, dx=0, dy=0):
+        if dx != 0:
+            self.rect.x += dx
+            if pygame.sprite.spritecollide(self, self.walls, False):
+                if dx > 0:
+                    self.rect.right = min(
+                        wall.rect.left for wall in pygame.sprite.spritecollide(self, self.walls, False))
+                elif dx < 0:
+                    self.rect.left = max(
+                        wall.rect.right for wall in pygame.sprite.spritecollide(self, self.walls, False))
+
+        if dy != 0:
+            self.rect.y += dy
+            if pygame.sprite.spritecollide(self, self.walls, False):
+                if dy > 0:
+                    self.rect.bottom = min(
+                        wall.rect.top for wall in pygame.sprite.spritecollide(self, self.walls, False))
+                elif dy < 0:
+                    self.rect.top = max(
+                        wall.rect.bottom for wall in pygame.sprite.spritecollide(self, self.walls, False))
+
     def update(self):
+        self.dx, self.dy = 0, 0
+        if pk[pygame.K_a]:
+            self.dx -= SPEED
+        elif pk[pygame.K_d]:
+            self.dx += SPEED
+        elif pk[pygame.K_w]:
+            self.dy -= SPEED
+        elif pk[pygame.K_s]:
+            self.dy += SPEED
+
+        self.movement(self.dx, self.dy)
         self.move()
-
-
 
 # evil
 evil_group = pygame.sprite.Group()
@@ -218,7 +271,6 @@ class Evil(pygame.sprite.Sprite):
             self.rect.x - 90, self.rect.y - 15, 300 - (self.evil_helth_max - self.evil_helth) * 300 // self.evil_helth_max,
             18))
 
-        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
 
 floor_group = pygame.sprite.Group()
 class floor(pygame.sprite.Sprite):
@@ -234,7 +286,7 @@ class floor(pygame.sprite.Sprite):
         self.rect.y = y
 
     def update(self):
-        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
+        pass
 
 wall_group = pygame.sprite.Group()
 class wall(pygame.sprite.Sprite):
@@ -250,7 +302,7 @@ class wall(pygame.sprite.Sprite):
         self.rect.y = y
 
     def update(self):
-        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
+        pass
 
 # Создание экземпляров floor
 print(Map)
@@ -279,9 +331,9 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 play = False
-for i in range(3):
-    Evil(250)
-hero = Hero(999999999999999)
+#for i in range(3):
+#    Evil(250)
+hero = Hero(999999999999999, wall_group)
 schet_fps = 0
 schet_anim = 0
 schet_attack_anim = 0
@@ -320,26 +372,24 @@ while running:
 
         if pk[pygame.K_a]:
             static = 3
-        if pk[pygame.K_d]:
+        elif pk[pygame.K_d]:
             static = 1
-        if pk[pygame.K_w]:
+        elif pk[pygame.K_w]:
             static = 2
-        if pk[pygame.K_s]:
+        elif pk[pygame.K_s]:
             static = 0
 
         # background
         screen_game.fill((255, 255, 255))
-
-        if not True:
-            text(screen, 'You Win, press "F" to exit the game')
-            if pk[pygame.K_f]:
-                play = False
 
         # Hit bar героя
         pygame.draw.rect(screen_game, (0, 200, 0),
                          (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
 
         # обновление экрана
+        camera.update(hero)
+        for sprite in all_sprites:
+            camera.apply(sprite)
         all_sprites.draw(screen_game)
         all_sprites.update()
         
