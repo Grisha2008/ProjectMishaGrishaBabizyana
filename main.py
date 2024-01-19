@@ -279,8 +279,8 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 play = False
-# for i in range(3):
-#     Evil(250)
+for i in range(3):
+    Evil(250)
 hero = Hero(999999999999999)
 schet_fps = 0
 schet_anim = 0
@@ -340,8 +340,9 @@ while running:
                          (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
 
         # обновление экрана
-        all_sprites.update()
         all_sprites.draw(screen_game)
+        all_sprites.update()
+        
         schet_fps += 1
         if schet_fps % 2 == 0:
             schet_anim += 1
