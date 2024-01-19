@@ -1,6 +1,7 @@
 import pygame
 import pygame_gui
 import Board_Create
+from random import randint
 
 pygame.init()
 pygame.mixer.init()
@@ -78,6 +79,10 @@ def move_other(x, y):
         y -= SPEED
     return x, y
 
+def get_distance(coords, coords1):
+    return ((coords[0] - coords1[0]) ** 2 + (coords[1] - coords1[1]) ** 2) ** 0.5
+
+
 # здесь определяются константы, классы и функции
 FPS = 20
 WIDTH = 1080
@@ -141,6 +146,8 @@ class Hero(pygame.sprite.Sprite):
         self.attack_animations.append(
             [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, 6 * 48) for j in range(4)])
 
+    def get_cords(self):
+        return self.rect.x, self.rect.y
 
     def move(self):
         keys = pygame.key.get_pressed()
@@ -159,7 +166,7 @@ class Hero(pygame.sprite.Sprite):
 
 # evil
 evil_group = pygame.sprite.Group()
-
+evil_list = list()
 
 class Evil(pygame.sprite.Sprite):
     image = pygame.transform.scale(pygame.image.load('Mobs/monster_demon.png'), (100, 100))
@@ -167,14 +174,18 @@ class Evil(pygame.sprite.Sprite):
     def __init__(self, evil_helth_max):
         super().__init__(all_sprites)
         self.add(evil_group)
+        evil_list.append(self)
         self.image = Evil.image
         self.direction = "right"
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
         self.evil_helth = evil_helth_max
         self.evil_helth_max = evil_helth_max
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.x = randint(WIDTH// 2, (WIDTH // 2) * 3)
+        self.rect.y = randint(HIGHT// 2, (HIGHT // 2) * 3)
+    
+    def get_cords(self):
+        return self.rect.x, self.rect.y
 
     def update(self):
         if hero.rect.y > self.rect.y - 36:
@@ -193,6 +204,17 @@ class Evil(pygame.sprite.Sprite):
                 self.direction = "right"
         if self.evil_helth <= 0:
             self.kill()
+
+        # мерием расстояние от героя до злодея
+        if get_distance(hero.get_cords(), self.get_cords()) <= 100:
+            hero.hero_helth -= 1
+
+        # Hit bar злодея
+        if self.evil_helth >= 0:
+            pygame.draw.rect(screen_game, (255 - self.evil_helth, self.evil_helth, 0), (
+            self.rect.x - 90, self.rect.y - 15, 300 - (self.evil_helth_max - self.evil_helth) * 300 // self.evil_helth_max,
+            18))
+        
         self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
 
 
@@ -255,7 +277,8 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 play = False
-evil = Evil(250)
+for i in range(3):
+    Evil(250)
 hero = Hero(100)
 schet_fps = 0
 schet_anim = 0
@@ -308,6 +331,11 @@ while running:
             text(screen, 'You Win, press "F" to exit the game')
             if pk[pygame.K_f]:
                 play = False
+
+
+        # Hit bar героя
+        pygame.draw.rect(screen_game, (0, 200, 0),
+                         (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
 
         # обновление экрана
         all_sprites.update()
