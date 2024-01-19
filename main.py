@@ -5,6 +5,7 @@ from random import randint
 
 pygame.init()
 pygame.mixer.init()
+#Init pygame(МИША ТЫ ПОНЯЛ???)
 
 window_size = (1080, 720)
 window = pygame.display.set_mode(window_size)
@@ -52,6 +53,7 @@ fps_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((500, 400), (2
 
 running = True
 
+#Значение для анимации
 static = 1
 
 def text(screen, text1):
@@ -61,12 +63,14 @@ def text(screen, text1):
     text_y = y
     screen.blit(text, (text_x, text_y))
 
+#Получаем картинку
 def get_animation(sheet, width, hieght, x, y):
     image = pygame.Surface((width, hieght), pygame.SRCALPHA)
     image.blit(sheet, (0, 0), (x, y, width, hieght))
     image = pygame.transform.scale(image, (144, 144))
     return image
 
+#Движение для остальных обьекто, относительно персонажа
 def move_other(x, y):
     pk = pygame.key.get_pressed()
     if pk[pygame.K_a]:
@@ -121,6 +125,7 @@ class Hero(pygame.sprite.Sprite):
         self.attack = 0
         self.attack_animations = []
         self.static_animations = []
+        #Получаем картинки для анимации циклом
         for i in range(3):
             self.static_animations.append(
                 [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, i * 48) for j in range(6)])
@@ -179,8 +184,8 @@ class Evil(pygame.sprite.Sprite):
         self.direction = "right"
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
-        self.evil_helth = evil_helth_max
         self.evil_helth_max = evil_helth_max
+        self.evil_helth = evil_helth_max
         self.rect.x = randint(WIDTH// 2, (WIDTH // 2) * 3)
         self.rect.y = randint(HIGHT// 2, (HIGHT // 2) * 3)
     
@@ -216,7 +221,6 @@ class Evil(pygame.sprite.Sprite):
             18))
         
         self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
-
 
 floor_group = pygame.sprite.Group()
 class floor(pygame.sprite.Sprite):
@@ -358,11 +362,6 @@ while running:
         pygame.draw.rect(screen_game, (0, 200, 0),
                          (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
         # Hit bar злодея
-        if evil.evil_helth >= 0:
-            pygame.draw.rect(screen_game, (255 - evil.evil_helth, evil.evil_helth, 0), (
-                evil.rect.x - 90, evil.rect.y - 15,
-                300 - (evil.evil_helth_max - evil.evil_helth) * 300 // evil.evil_helth_max,
-                18))
         pygame.display.update()
     else:
         time_delta = clock.tick(fps) / 1000.0
