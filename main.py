@@ -67,17 +67,33 @@ def get_animation(sheet, width, hieght, x, y):
     image = pygame.transform.scale(image, (144, 144))
     return image
 
+# Теперь объединим эту проверку с вашей функцией move_other
 def move_other(x, y):
     pk = pygame.key.get_pressed()
+
+    new_x = x  # сохраняем новые координаты в отдельных переменных
+    new_y = y
+
     if pk[pygame.K_a]:
-        x += SPEED
+        new_x -= SPEED
     if pk[pygame.K_d]:
-        x -= SPEED
+        new_x += SPEED
     if pk[pygame.K_w]:
-        y += SPEED
+        new_y -= SPEED
     if pk[pygame.K_s]:
-        y -= SPEED
-    return x, y
+        new_y += SPEED
+
+    temp_hero = hero
+    temp_hero.rect.x = new_x
+    temp_hero.rect.y = new_y
+
+    if pygame.sprite.spritecollide(temp_hero, wall_group, False, pygame.sprite.collide_mask):
+        # Если есть коллизия, не обновляем координаты героя
+        return x, y
+    else:
+        # Если коллизии нет, возвращаем новые координаты
+        x, y = new_x, new_y
+        return x, y
 
 def get_distance(coords, coords1):
     return ((coords[0] - coords1[0]) ** 2 + (coords[1] - coords1[1]) ** 2) ** 0.5
@@ -214,9 +230,8 @@ class Evil(pygame.sprite.Sprite):
             pygame.draw.rect(screen_game, (255 - self.evil_helth, self.evil_helth, 0), (
             self.rect.x - 90, self.rect.y - 15, 300 - (self.evil_helth_max - self.evil_helth) * 300 // self.evil_helth_max,
             18))
-        
-        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
 
+        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
 
 floor_group = pygame.sprite.Group()
 class floor(pygame.sprite.Sprite):
@@ -277,9 +292,9 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 play = False
-for i in range(3):
-    Evil(250)
-hero = Hero(100)
+# for i in range(3):
+#     Evil(250)
+hero = Hero(999999999999999)
 schet_fps = 0
 schet_anim = 0
 schet_attack_anim = 0
@@ -327,11 +342,11 @@ while running:
 
         # background
         screen_game.fill((255, 255, 255))
+
         if not True:
             text(screen, 'You Win, press "F" to exit the game')
             if pk[pygame.K_f]:
                 play = False
-
 
         # Hit bar героя
         pygame.draw.rect(screen_game, (0, 200, 0),
@@ -357,12 +372,6 @@ while running:
             schet_attack_anim = 0
         pygame.draw.rect(screen_game, (0, 200, 0),
                          (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
-        # Hit bar злодея
-        if evil.evil_helth >= 0:
-            pygame.draw.rect(screen_game, (255 - evil.evil_helth, evil.evil_helth, 0), (
-                evil.rect.x - 90, evil.rect.y - 15,
-                300 - (evil.evil_helth_max - evil.evil_helth) * 300 // evil.evil_helth_max,
-                18))
         pygame.display.update()
     else:
         time_delta = clock.tick(fps) / 1000.0
