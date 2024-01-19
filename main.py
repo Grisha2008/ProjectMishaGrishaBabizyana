@@ -71,29 +71,16 @@ def get_animation(sheet, width, hieght, x, y):
 def move_other(x, y):
     pk = pygame.key.get_pressed()
 
-    new_x = x  # сохраняем новые координаты в отдельных переменных
-    new_y = y
-
     if pk[pygame.K_a]:
-        new_x -= SPEED
+        x += SPEED
     if pk[pygame.K_d]:
-        new_x += SPEED
+        x -= SPEED
     if pk[pygame.K_w]:
-        new_y -= SPEED
+        y += SPEED
     if pk[pygame.K_s]:
-        new_y += SPEED
+        y -= SPEED
 
-    temp_hero = hero
-    temp_hero.rect.x = new_x
-    temp_hero.rect.y = new_y
-
-    if pygame.sprite.spritecollide(temp_hero, wall_group, False, pygame.sprite.collide_mask):
-        # Если есть коллизия, не обновляем координаты героя
-        return x, y
-    else:
-        # Если коллизии нет, возвращаем новые координаты
-        x, y = new_x, new_y
-        return x, y
+    return x, y
 
 def get_distance(coords, coords1):
     return ((coords[0] - coords1[0]) ** 2 + (coords[1] - coords1[1]) ** 2) ** 0.5
