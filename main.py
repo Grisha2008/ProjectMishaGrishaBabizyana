@@ -210,11 +210,11 @@ class Hero(pygame.sprite.Sprite):
         self.dx, self.dy = 0, 0
         if pk[pygame.K_a]:
             self.dx -= SPEED
-        elif pk[pygame.K_d]:
+        if pk[pygame.K_d]:
             self.dx += SPEED
-        elif pk[pygame.K_w]:
+        if pk[pygame.K_w]:
             self.dy -= SPEED
-        elif pk[pygame.K_s]:
+        if pk[pygame.K_s]:
             self.dy += SPEED
 
         self.movement(self.dx, self.dy)
@@ -227,7 +227,7 @@ evil_list = list()
 class Evil(pygame.sprite.Sprite):
     image = pygame.transform.scale(pygame.image.load('Mobs/monster_demon.png'), (100, 100))
 
-    def __init__(self, evil_helth_max):
+    def __init__(self, evil_helth_max, walls):
         super().__init__(all_sprites)
         self.add(evil_group)
         evil_list.append(self)
@@ -239,25 +239,53 @@ class Evil(pygame.sprite.Sprite):
         self.evil_helth_max = evil_helth_max
         self.rect.x = randint(WIDTH// 2, (WIDTH // 2) * 3)
         self.rect.y = randint(HIGHT// 2, (HIGHT // 2) * 3)
+        self.walls = wall_group1
+        self.dx = 0
+        self.dy = 0
     
     def get_cords(self):
         return self.rect.x, self.rect.y
 
+    def movement(self, dx=0, dy=0):
+        if dx != 0:
+            self.rect.x += dx
+            if pygame.sprite.spritecollide(self, self.walls, False):
+                if dx > 0:
+                    self.rect.right = min(
+                        wall.rect.left for wall in pygame.sprite.spritecollide(self, self.walls, False))
+                elif dx < 0:
+                    self.rect.left = max(
+                        wall.rect.right for wall in pygame.sprite.spritecollide(self, self.walls, False))
+
+        if dy != 0:
+            self.rect.y += dy
+            if pygame.sprite.spritecollide(self, self.walls, False):
+                if dy > 0:
+                    self.rect.bottom = min(
+                        wall.rect.top for wall in pygame.sprite.spritecollide(self, self.walls, False))
+                elif dy < 0:
+                    self.rect.top = max(
+                        wall.rect.bottom for wall in pygame.sprite.spritecollide(self, self.walls, False))
+
     def update(self):
+        self.dx, self.dy = 0, 0
         if hero.rect.y > self.rect.y - 36:
-            self.rect.y += 4
+            self.dy += 4
         elif hero.rect.y < self.rect.y - 36:
-            self.rect.y -= 4
+            self.dy -= 4
         if hero.rect.x > self.rect.x - 32:
-            self.rect.x += 4
+            self.dx += 4
             if self.direction != "left":
                 self.image = pygame.transform.flip(self.image, True, False)
                 self.direction = "left"
         elif hero.rect.x < self.rect.x - 32:
-            self.rect.x -= 4
+            self.dx -= 4
             if self.direction != "right":
                 self.image = pygame.transform.flip(self.image, True, False)
                 self.direction = "right"
+
+        self.movement(self.dx, self.dy)
+
         if self.evil_helth <= 0:
             self.kill()
 
@@ -290,18 +318,34 @@ class floor(pygame.sprite.Sprite):
 
 wall_group = pygame.sprite.Group()
 class wall(pygame.sprite.Sprite):
-    image = pygame.transform.scale(pygame.image.load('Map/Set 1.png'), (200, 200))
+    image = pygame.transform.scale(pygame.image.load('Map/Set 1.png'), (100, 100))
 
     def __init__(self):
         super().__init__(all_sprites)
-        self.add(floor_group)
+        self.add(wall_group)
         self.image = wall.image
-        self.rect = self.image.get_rect()
+        self.rect = pygame.Rect(0,0,100,80)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = x
         self.rect.y = y
 
     def update(self):
+        # pygame.draw.rect(screen_game, (255,255,255), self.rect)
+        pass
+
+wall_group1 = pygame.sprite.Group()
+class wall1(pygame.sprite.Sprite):
+    image = pygame.transform.scale(pygame.image.load('Map/Set 1.png'), (200, 200))
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.add(wall_group1)
+        self.image = wall1.image
+        self.rect = self.image.get_rect()
+        #self.mask = pygame.mask.from_surface(self.image)
+        
+    def update(self):
+        # pygame.draw.rect(screen_game, (255,255,255), self.rect)
         pass
 
 # Создание экземпляров floor
@@ -317,10 +361,15 @@ for i in range(-2, 8):
             floor_group.add(new_floor)
         else:
             new_wall = wall()
-            new_wall.rect.x = i * 200
-            new_wall.rect.y = j * 200
+            new_wall.rect.x = i * 200 + 50
+            new_wall.rect.y = j * 200 + 15
             # Добавляем в группу спрайтов
-            wall_group.add(new_wall)
+
+            new_wall1 = wall1()
+            new_wall1.rect.x = i * 200 
+            new_wall1.rect.y = j * 200 
+            # Добавляем в группу спрайтов
+            wall_group1.add(new_wall1)
 
 
 class Chest(pygame.sprite.Sprite):
@@ -331,8 +380,8 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 play = False
-#for i in range(3):
-#    Evil(250)
+for i in range(3):
+    Evil(250, wall_group)
 hero = Hero(999999999999999, wall_group)
 schet_fps = 0
 schet_anim = 0
