@@ -5,7 +5,6 @@ from random import randint
 
 pygame.init()
 pygame.mixer.init()
-#Init pygame(МИША ТЫ ПОНЯЛ???)
 
 window_size = (1080, 720)
 window = pygame.display.set_mode(window_size)
@@ -23,7 +22,8 @@ vol = 0.1
 pygame.mixer.music.set_volume(vol)
 
 # Загрузка изображений для кнопки
-image_normal = pygame.image.load('321-3217993_freddy-plush-fnaf-plush-pixel-art-transformed.png')  # Нормальное состояние кнопки
+image_normal = pygame.image.load(
+    '321-3217993_freddy-plush-fnaf-plush-pixel-art-transformed.png')  # Нормальное состояние кнопки
 image_pressed = pygame.image.load('image-MANMd5Pts-transformed.png')  # Нажатое состояние кнопки
 
 button_size = (1080, 200)
@@ -34,7 +34,7 @@ button_position = (0, window_size[1] - button_size[1])  # Позиция кно�
 button_state = 'normal'
 
 button_sound = pygame.mixer.Sound('ring.mp3')
-button_sound.set_volume(0.2)# Звук кнопки
+button_sound.set_volume(0.2)  # Звук кнопки
 
 screen = pygame_gui.UIManager(window_size)
 clock = pygame.time.Clock()
@@ -42,19 +42,24 @@ clock = pygame.time.Clock()
 fps = 60
 
 # Создание кнопок и слайдеров
-play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((100, 100), (300, 100)), text='Играть', manager=screen)
-exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((100, 400), (300, 100)), text='Выйти', manager=screen)
-volume_slider = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((700, 100), (350, 100)), start_value=vol, value_range=(0, 1), manager=screen)
-fps_slider = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((700, 400), (350, 100)), start_value=fps, value_range=(20, 120), manager=screen)
+play_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((100, 100), (300, 100)), text='Играть',
+                                           manager=screen)
+exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((100, 400), (300, 100)), text='Выйти',
+                                           manager=screen)
+volume_slider = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((700, 100), (350, 100)),
+                                                       start_value=vol, value_range=(0, 1), manager=screen)
+fps_slider = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((700, 400), (350, 100)), start_value=fps,
+                                                    value_range=(20, 120), manager=screen)
 
 # Подписи к слайдерам
-volume_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((500, 100), (200, 100)), text='Громкость', manager=screen)
+volume_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((500, 100), (200, 100)), text='Громкость',
+                                           manager=screen)
 fps_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((500, 400), (200, 100)), text='FPS', manager=screen)
 
 running = True
 
-#Значение для анимации
 static = 1
+
 
 def text(screen, text1):
     font = pygame.font.SysFont('', 60)
@@ -63,25 +68,32 @@ def text(screen, text1):
     text_y = y
     screen.blit(text, (text_x, text_y))
 
-#Получаем картинку
+
 def get_animation(sheet, width, hieght, x, y):
     image = pygame.Surface((width, hieght), pygame.SRCALPHA)
     image.blit(sheet, (0, 0), (x, y, width, hieght))
     image = pygame.transform.scale(image, (144, 144))
     return image
 
-#Движение для остальных обьекто, относительно персонажа
-def move_other(x, y):
-    pk = pygame.key.get_pressed()
-    if pk[pygame.K_a]:
-        x += SPEED
-    if pk[pygame.K_d]:
-        x -= SPEED
-    if pk[pygame.K_w]:
-        y += SPEED
-    if pk[pygame.K_s]:
-        y -= SPEED
-    return x, y
+
+# Ты долбаеб?
+# А может быть ты? я на коленках это в ночи делал, я почти весь код тут написал
+#Гитхаб лучше чем телеграм пон
+# def move_other(x, y):
+#    pk = pygame.key.get_pressed()
+#
+#    if pk[pygame.K_a]:
+#        x += SPEED
+#    elif pk[pygame.K_d]:
+#        x -= SPEED
+#    elif pk[pygame.K_w]:
+#        y += SPEED
+#    elif pk[pygame.K_s]:
+#        y -= SPEED
+#
+#
+#
+#    return x, y
 
 def get_distance(coords, coords1):
     return ((coords[0] - coords1[0]) ** 2 + (coords[1] - coords1[1]) ** 2) ** 0.5
@@ -108,11 +120,32 @@ fullscreen = False
 
 Map = Board_Create.matrix
 
+
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - HIGHT // 2)
+
+
+camera = Camera()
+
+
 # hero
 class Hero(pygame.sprite.Sprite):
     image = get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, 0, 0)
 
-    def __init__(self, hero_helth_max):
+    def __init__(self, hero_helth_max, walls):
         super().__init__(all_sprites)
         self.image = Hero.image
         self.rect = self.image.get_rect()
@@ -123,9 +156,11 @@ class Hero(pygame.sprite.Sprite):
         self.rect.y = y - 100
         self.animations = []
         self.attack = 0
+        self.walls = walls
+        self.dx = 0
+        self.dy = 0
         self.attack_animations = []
         self.static_animations = []
-        #Получаем картинки для анимации циклом
         for i in range(3):
             self.static_animations.append(
                 [get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, j * 48, i * 48) for j in range(6)])
@@ -164,14 +199,46 @@ class Hero(pygame.sprite.Sprite):
         else:
             self.image = self.animations[static][schet_anim]
 
-    def update(self):
-        self.move()
+    def movement(self, dx=0, dy=0):
+        if dx != 0:
+            self.rect.x += dx
+            if pygame.sprite.spritecollide(self, self.walls, False):
+                if dx > 0:
+                    self.rect.right = min(
+                        wall.rect.left for wall in pygame.sprite.spritecollide(self, self.walls, False))
+                elif dx < 0:
+                    self.rect.left = max(
+                        wall.rect.right for wall in pygame.sprite.spritecollide(self, self.walls, False))
 
+        if dy != 0:
+            self.rect.y += dy
+            if pygame.sprite.spritecollide(self, self.walls, False):
+                if dy > 0:
+                    self.rect.bottom = min(
+                        wall.rect.top for wall in pygame.sprite.spritecollide(self, self.walls, False))
+                elif dy < 0:
+                    self.rect.top = max(
+                        wall.rect.bottom for wall in pygame.sprite.spritecollide(self, self.walls, False))
+
+    def update(self):
+        self.dx, self.dy = 0, 0
+        if pk[pygame.K_a]:
+            self.dx -= SPEED
+        elif pk[pygame.K_d]:
+            self.dx += SPEED
+        elif pk[pygame.K_w]:
+            self.dy -= SPEED
+        elif pk[pygame.K_s]:
+            self.dy += SPEED
+
+        self.movement(self.dx, self.dy)
+        self.move()
 
 
 # evil
 evil_group = pygame.sprite.Group()
 evil_list = list()
+
 
 class Evil(pygame.sprite.Sprite):
     image = pygame.transform.scale(pygame.image.load('Mobs/monster_demon.png'), (100, 100))
@@ -184,11 +251,11 @@ class Evil(pygame.sprite.Sprite):
         self.direction = "right"
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
-        self.evil_helth_max = evil_helth_max
         self.evil_helth = evil_helth_max
-        self.rect.x = randint(WIDTH// 2, (WIDTH // 2) * 3)
-        self.rect.y = randint(HIGHT// 2, (HIGHT // 2) * 3)
-    
+        self.evil_helth_max = evil_helth_max
+        self.rect.x = randint(WIDTH // 2, (WIDTH // 2) * 3)
+        self.rect.y = randint(HIGHT // 2, (HIGHT // 2) * 3)
+
     def get_cords(self):
         return self.rect.x, self.rect.y
 
@@ -217,12 +284,14 @@ class Evil(pygame.sprite.Sprite):
         # Hit bar злодея
         if self.evil_helth >= 0:
             pygame.draw.rect(screen_game, (255 - self.evil_helth, self.evil_helth, 0), (
-            self.rect.x - 90, self.rect.y - 15, 300 - (self.evil_helth_max - self.evil_helth) * 300 // self.evil_helth_max,
-            18))
-        
-        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
+                self.rect.x - 90, self.rect.y - 15,
+                300 - (self.evil_helth_max - self.evil_helth) * 300 // self.evil_helth_max,
+                18))
+
 
 floor_group = pygame.sprite.Group()
+
+
 class floor(pygame.sprite.Sprite):
     image = pygame.transform.scale(pygame.image.load('Map/Set 1.2.png'), (200, 200))
 
@@ -236,23 +305,27 @@ class floor(pygame.sprite.Sprite):
         self.rect.y = y
 
     def update(self):
-        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
+        pass
+
 
 wall_group = pygame.sprite.Group()
+
+
 class wall(pygame.sprite.Sprite):
     image = pygame.transform.scale(pygame.image.load('Map/Set 1.png'), (200, 200))
 
     def __init__(self):
         super().__init__(all_sprites)
-        self.add(floor_group)
+        self.add(wall_group)
         self.image = wall.image
-        self.rect = self.image.get_rect()
+        self.rect = pygame.Rect(0, 100, 150, 80)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = x
         self.rect.y = y
 
     def update(self):
-        self.rect.x, self.rect.y = move_other(self.rect.x, self.rect.y)
+        pass
+
 
 # Создание экземпляров floor
 print(Map)
@@ -272,18 +345,19 @@ for i in range(-2, 8):
             # Добавляем в группу спрайтов
             wall_group.add(new_wall)
 
-
+#Надо сделать нормальные стены по бокам
 class Chest(pygame.sprite.Sprite):
     pass
+
 
 # border
 horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 play = False
-for i in range(3):
-    Evil(250)
-hero = Hero(100)
+# for i in range(3):
+#    Evil(250)
+hero = Hero(999999999999999, wall_group)
 schet_fps = 0
 schet_anim = 0
 schet_attack_anim = 0
@@ -322,28 +396,27 @@ while running:
 
         if pk[pygame.K_a]:
             static = 3
-        if pk[pygame.K_d]:
+        elif pk[pygame.K_d]:
             static = 1
-        if pk[pygame.K_w]:
+        elif pk[pygame.K_w]:
             static = 2
-        if pk[pygame.K_s]:
+        elif pk[pygame.K_s]:
             static = 0
 
         # background
         screen_game.fill((255, 255, 255))
-        if not True:
-            text(screen, 'You Win, press "F" to exit the game')
-            if pk[pygame.K_f]:
-                play = False
-
 
         # Hit bar героя
         pygame.draw.rect(screen_game, (0, 200, 0),
                          (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
 
         # обновление экрана
-        all_sprites.update()
+        camera.update(hero)
+        for sprite in all_sprites:
+            camera.apply(sprite)
         all_sprites.draw(screen_game)
+        all_sprites.update()
+
         schet_fps += 1
         if schet_fps % 2 == 0:
             schet_anim += 1
@@ -361,7 +434,6 @@ while running:
             schet_attack_anim = 0
         pygame.draw.rect(screen_game, (0, 200, 0),
                          (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
-        # Hit bar злодея
         pygame.display.update()
     else:
         time_delta = clock.tick(fps) / 1000.0
@@ -371,7 +443,8 @@ while running:
                 pygame.quit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if pygame.Rect(button_position[0], button_position[1], button_size[0], button_size[1]).collidepoint(event.pos):
+                if pygame.Rect(button_position[0], button_position[1], button_size[0], button_size[1]).collidepoint(
+                        event.pos):
                     button_state = 'pressed'
                     button_sound.play()
 
