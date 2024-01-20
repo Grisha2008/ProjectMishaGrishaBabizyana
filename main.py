@@ -2,6 +2,7 @@ import pygame
 import pygame_gui
 import Board_Create
 from random import randint
+import math
 
 pygame.init()
 pygame.mixer.init()
@@ -292,6 +293,9 @@ class Evil(pygame.sprite.Sprite):
         # мерием расстояние от героя до злодея
         if get_distance(hero.get_cords(), self.get_cords()) <= 100:
             hero.hero_helth -= 1
+        
+        if pygame.sprite.spritecollide(self, bullet_group, True, pygame.sprite.collide_mask):
+            self.evil_helth -= 10
 
         # Hit bar злодея
         if self.evil_helth >= 0:
@@ -299,6 +303,37 @@ class Evil(pygame.sprite.Sprite):
             self.rect.x - 90, self.rect.y - 15, 300 - (self.evil_helth_max - self.evil_helth) * 300 // self.evil_helth_max,
             18))
 
+
+# bullet
+bullet_group = pygame.sprite.Group()
+
+class Bullet(pygame.sprite.Sprite):
+    image = pygame.transform.scale(pygame.image.load('img_1.png'), (10, 10))
+
+    def __init__(self, screen, start_x, start_y, direction_x, direction_y):
+        super().__init__(all_sprites)
+        self.add(bullet_group)
+        self.image = Bullet.image
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.screen = screen
+        self.rect.x = start_x
+        self.rect.y = start_y
+        self.direction_x = direction_x
+        self.direction_y = direction_y
+        self.speed = 20
+        self.start_pos = start_x, start_y
+
+    def update(self):
+        self.rect.x += self.direction_x * self.speed
+        self.rect.y += self.direction_y * self.speed
+
+        if pygame.sprite.spritecollide(self, wall_group1, False, pygame.sprite.collide_mask):
+            self.kill()
+
+        print(get_distance(self.start_pos, self.rect))
+        if get_distance(self.start_pos, self.rect) > 500:
+            self.kill()
 
 floor_group = pygame.sprite.Group()
 class floor(pygame.sprite.Sprite):
@@ -392,6 +427,7 @@ y_pos = 0
 
 # главный цикл
 while running:
+    bullets = []
     if play:
         pk = pygame.key.get_pressed()
         clock.tick(FPS)
@@ -404,6 +440,15 @@ while running:
                 if event.button == 1:
                     shooting_sound.play()
                     hero.attack = True
+                if event.button == 3:
+                    mouse_pos = pygame.mouse.get_pos()
+                    center_x, center_y = hero.rect.center
+                    direction_x, direction_y = mouse_pos[0] - center_x, mouse_pos[1] - center_y
+                    distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
+                    direction_x /= distance
+                    direction_y /= distance
+                    Bullet(screen_game, center_x, center_y, direction_x, direction_y)
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     play = False
