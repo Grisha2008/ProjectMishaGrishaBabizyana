@@ -337,8 +337,6 @@ bullet_group = pygame.sprite.Group()
 
 class Bullet(pygame.sprite.Sprite):
     image = pygame.transform.scale(pygame.image.load('img_4.png'), (60, 60))
-class Bullet(pygame.sprite.Sprite):
-    image = pygame.transform.scale(pygame.image.load('img_1.png'), (10, 10))
 
     def __init__(self, screen, start_x, start_y, direction_x, direction_y):
         super().__init__(all_sprites)
@@ -359,10 +357,6 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y += self.direction_y * self.speed
 
         if pygame.sprite.spritecollide(self, wall_group1, False, pygame.sprite.collide_mask):
-            self.kill()
-
-        print(get_distance(self.start_pos, self.rect))
-        if get_distance(self.start_pos, self.rect) > 500:
             self.kill()
 
 floor_group = pygame.sprite.Group()
@@ -508,8 +502,6 @@ while running:
                     direction_y /= distance
                     schet_fps_bullet -= 25
                     Bullet(screen_game, center_x - 25, center_y, direction_x, direction_y)
-                    Bullet(screen_game, center_x, center_y, direction_x, direction_y)
-
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
