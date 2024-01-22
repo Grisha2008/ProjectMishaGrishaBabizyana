@@ -253,8 +253,15 @@ class Evil(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.evil_helth = evil_helth_max
         self.evil_helth_max = evil_helth_max
+
         self.rect.x = randint(WIDTH // 2, (WIDTH // 2) * 4)
         self.rect.y = randint(HIGHT // 2, (HIGHT // 2) * 4)
+        self.walls = wall_group1
+        self.dx = 0
+        self.dy = 0
+
+        self.rect.x = randint(WIDTH// 2, (WIDTH // 2) * 3)
+        self.rect.y = randint(HIGHT// 2, (HIGHT // 2) * 3)
         self.walls = wall_group1
         self.dx = 0
         self.dy = 0
@@ -310,6 +317,9 @@ class Evil(pygame.sprite.Sprite):
         # мерием расстояние от героя до злодея
         if get_distance(hero.get_cords(), self.get_cords()) <= 100:
             hero.hero_helth -= 1
+        
+        if pygame.sprite.spritecollide(self, bullet_group, True, pygame.sprite.collide_mask):
+            self.evil_helth -= 10
 
         if pygame.sprite.spritecollide(self, bullet_group, True, pygame.sprite.collide_mask):
             self.evil_helth -= 10
@@ -325,9 +335,10 @@ class Evil(pygame.sprite.Sprite):
 # bullet
 bullet_group = pygame.sprite.Group()
 
-
 class Bullet(pygame.sprite.Sprite):
     image = pygame.transform.scale(pygame.image.load('img_4.png'), (60, 60))
+class Bullet(pygame.sprite.Sprite):
+    image = pygame.transform.scale(pygame.image.load('img_1.png'), (10, 10))
 
     def __init__(self, screen, start_x, start_y, direction_x, direction_y):
         super().__init__(all_sprites)
@@ -348,6 +359,10 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.y += self.direction_y * self.speed
 
         if pygame.sprite.spritecollide(self, wall_group1, False, pygame.sprite.collide_mask):
+            self.kill()
+
+        print(get_distance(self.start_pos, self.rect))
+        if get_distance(self.start_pos, self.rect) > 500:
             self.kill()
 
 floor_group = pygame.sprite.Group()
@@ -380,10 +395,26 @@ class wall(pygame.sprite.Sprite):
         self.add(wall_group)
         self.image = wall.image
         self.rect = pygame.Rect(0, 0, 100, 80)
+        self.rect = pygame.Rect(0,0,100,80)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = x
         self.rect.y = y
 
+    def update(self):
+        # pygame.draw.rect(screen_game, (255,255,255), self.rect)
+        pass
+
+wall_group1 = pygame.sprite.Group()
+class wall1(pygame.sprite.Sprite):
+    image = pygame.transform.scale(pygame.image.load('Map/Set 1.png'), (200, 200))
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.add(wall_group1)
+        self.image = wall1.image
+        self.rect = self.image.get_rect()
+        #self.mask = pygame.mask.from_surface(self.image)
+        
     def update(self):
         # pygame.draw.rect(screen_game, (255,255,255), self.rect)
         pass
@@ -426,6 +457,8 @@ for i in range(-4, 8):
 
             new_wall1 = wall1()
             new_wall1.rect.x = i * 200
+            new_wall1.rect.y = j * 200
+            new_wall1.rect.x = i * 200 
             new_wall1.rect.y = j * 200
             # Добавляем в группу спрайтов
             wall_group1.add(new_wall1)
@@ -475,6 +508,8 @@ while running:
                     direction_y /= distance
                     schet_fps_bullet -= 25
                     Bullet(screen_game, center_x - 25, center_y, direction_x, direction_y)
+                    Bullet(screen_game, center_x, center_y, direction_x, direction_y)
+
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
