@@ -2,6 +2,7 @@ import pygame
 import pygame_gui
 import Board_Create
 from random import randint
+import math
 
 pygame.init()
 pygame.mixer.init()
@@ -75,12 +76,9 @@ def get_animation(sheet, width, hieght, x, y):
     image = pygame.transform.scale(image, (144, 144))
     return image
 
+
 # Ты долбаеб?
-# А может быть ты? я на коленках это в ночи делал, я почти весь код тут написал
-#Гитхаб лучше чем телеграм пон
 # def move_other(x, y):
-# Ты долбаеб?
-#def move_other(x, y):
 #    pk = pygame.key.get_pressed()
 #
 #    if pk[pygame.K_a]:
@@ -91,6 +89,7 @@ def get_animation(sheet, width, hieght, x, y):
 #        y += SPEED
 #    elif pk[pygame.K_s]:
 #        y -= SPEED
+#
 #
 #
 #    return x, y
@@ -119,22 +118,28 @@ all_sprites = pygame.sprite.Group()
 fullscreen = False
 
 Map = Board_Create.matrix
+for i in Map:
+    print(i)
 
 class Camera:
     # зададим начальный сдвиг камеры
     def __init__(self):
         self.dx = 0
         self.dy = 0
+
     # сдвинуть объект obj на смещение камеры
     def apply(self, obj):
         obj.rect.x += self.dx
         obj.rect.y += self.dy
+
     # позиционировать камеру на объекте target
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - HIGHT // 2)
 
+
 camera = Camera()
+
 
 # hero
 class Hero(pygame.sprite.Sprite):
@@ -204,6 +209,7 @@ class Hero(pygame.sprite.Sprite):
                 elif dx < 0:
                     self.rect.left = max(
                         wall.rect.right for wall in pygame.sprite.spritecollide(self, self.walls, False))
+
         if dy != 0:
             self.rect.y += dy
             if pygame.sprite.spritecollide(self, self.walls, False):
@@ -218,29 +224,16 @@ class Hero(pygame.sprite.Sprite):
         self.dx, self.dy = 0, 0
         if pk[pygame.K_a]:
             self.dx -= SPEED
-        elif pk[pygame.K_d]:
+        if pk[pygame.K_d]:
             self.dx += SPEED
-        elif pk[pygame.K_w]:
+        if pk[pygame.K_w]:
             self.dy -= SPEED
-        elif pk[pygame.K_s]:
+        if pk[pygame.K_s]:
             self.dy += SPEED
 
         self.movement(self.dx, self.dy)
         self.move()
 
-    def update(self):
-        self.dx, self.dy = 0, 0
-        if pk[pygame.K_a]:
-            self.dx -= SPEED
-        elif pk[pygame.K_d]:
-            self.dx += SPEED
-        elif pk[pygame.K_w]:
-            self.dy -= SPEED
-        elif pk[pygame.K_s]:
-            self.dy += SPEED
-
-        self.movement(self.dx, self.dy)
-        self.move()
 
 # evil
 evil_group = pygame.sprite.Group()
@@ -250,7 +243,7 @@ evil_list = list()
 class Evil(pygame.sprite.Sprite):
     image = pygame.transform.scale(pygame.image.load('Mobs/monster_demon.png'), (100, 100))
 
-    def __init__(self, evil_helth_max):
+    def __init__(self, evil_helth_max, walls):
         super().__init__(all_sprites)
         self.add(evil_group)
         evil_list.append(self)
@@ -260,33 +253,66 @@ class Evil(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.evil_helth = evil_helth_max
         self.evil_helth_max = evil_helth_max
-        self.rect.x = randint(WIDTH // 2, (WIDTH // 2) * 3)
-        self.rect.y = randint(HIGHT // 2, (HIGHT // 2) * 3)
+        self.rect.x = randint(WIDTH // 2, (WIDTH // 2) * 4)
+        self.rect.y = randint(HIGHT // 2, (HIGHT // 2) * 4)
+        self.walls = wall_group1
+        self.dx = 0
+        self.dy = 0
 
     def get_cords(self):
         return self.rect.x, self.rect.y
 
+    def movement(self, dx=0, dy=0):
+        if dx != 0:
+            self.rect.x += dx
+            if pygame.sprite.spritecollide(self, self.walls, False):
+                if dx > 0:
+                    self.rect.right = min(
+                        wall.rect.left for wall in pygame.sprite.spritecollide(self, self.walls, False))
+                elif dx < 0:
+                    self.rect.left = max(
+                        wall.rect.right for wall in pygame.sprite.spritecollide(self, self.walls, False))
+
+        if dy != 0:
+            self.rect.y += dy
+            if pygame.sprite.spritecollide(self, self.walls, False):
+                if dy > 0:
+                    self.rect.bottom = min(
+                        wall.rect.top for wall in pygame.sprite.spritecollide(self, self.walls, False))
+                elif dy < 0:
+                    self.rect.top = max(
+                        wall.rect.bottom for wall in pygame.sprite.spritecollide(self, self.walls, False))
+
     def update(self):
+        # Перемещение с учетом столкновений
+        self.movement(self.dx, self.dy)
+        self.dx, self.dy = 0, 0
         if hero.rect.y > self.rect.y - 36:
-            self.rect.y += 4
+            self.dy += 4
         elif hero.rect.y < self.rect.y - 36:
-            self.rect.y -= 4
+            self.dy -= 4
         if hero.rect.x > self.rect.x - 32:
-            self.rect.x += 4
+            self.dx += 4
             if self.direction != "left":
                 self.image = pygame.transform.flip(self.image, True, False)
                 self.direction = "left"
         elif hero.rect.x < self.rect.x - 32:
-            self.rect.x -= 4
+            self.dx -= 4
             if self.direction != "right":
                 self.image = pygame.transform.flip(self.image, True, False)
                 self.direction = "right"
+
+        self.movement(self.dx, self.dy)
+
         if self.evil_helth <= 0:
             self.kill()
 
         # мерием расстояние от героя до злодея
         if get_distance(hero.get_cords(), self.get_cords()) <= 100:
             hero.hero_helth -= 1
+
+        if pygame.sprite.spritecollide(self, bullet_group, True, pygame.sprite.collide_mask):
+            self.evil_helth -= 10
 
         # Hit bar злодея
         if self.evil_helth >= 0:
@@ -295,6 +321,34 @@ class Evil(pygame.sprite.Sprite):
                 300 - (self.evil_helth_max - self.evil_helth) * 300 // self.evil_helth_max,
                 18))
 
+
+# bullet
+bullet_group = pygame.sprite.Group()
+
+
+class Bullet(pygame.sprite.Sprite):
+    image = pygame.transform.scale(pygame.image.load('img_4.png'), (60, 60))
+
+    def __init__(self, screen, start_x, start_y, direction_x, direction_y):
+        super().__init__(all_sprites)
+        self.add(bullet_group)
+        self.image = Bullet.image
+        self.rect = self.image.get_rect()
+        self.mask = pygame.mask.from_surface(self.image)
+        self.screen = screen
+        self.rect.x = start_x
+        self.rect.y = start_y
+        self.direction_x = direction_x
+        self.direction_y = direction_y
+        self.speed = 20
+        self.start_pos = start_x, start_y
+
+    def update(self):
+        self.rect.x += self.direction_x * self.speed
+        self.rect.y += self.direction_y * self.speed
+
+        if pygame.sprite.spritecollide(self, wall_group1, False, pygame.sprite.collide_mask):
+            self.kill()
 
 floor_group = pygame.sprite.Group()
 
@@ -314,29 +368,50 @@ class floor(pygame.sprite.Sprite):
     def update(self):
         pass
 
+
 wall_group = pygame.sprite.Group()
 
 
 class wall(pygame.sprite.Sprite):
-    image = pygame.transform.scale(pygame.image.load('Map/Set 1.png'), (200, 200))
+    image = pygame.transform.scale(pygame.image.load('Map/Set 1.png'), (100, 100))
 
     def __init__(self):
         super().__init__(all_sprites)
         self.add(wall_group)
         self.image = wall.image
-        self.rect = pygame.Rect(0, 100, 150, 80)
+        self.rect = pygame.Rect(0, 0, 100, 80)
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = x
         self.rect.y = y
 
     def update(self):
+        # pygame.draw.rect(screen_game, (255,255,255), self.rect)
         pass
 
+
+wall_group1 = pygame.sprite.Group()
+
+
+class wall1(pygame.sprite.Sprite):
+    image = pygame.transform.scale(pygame.image.load('Map/Set 1.png'), (200, 200))
+
+    def __init__(self):
+        super().__init__(all_sprites)
+        self.add(wall_group1)
+        self.image = wall1.image
+        self.rect = self.image.get_rect()
+        # self.mask = pygame.mask.from_surface(self.image)
+
+    def update(self):
+        # pygame.draw.rect(screen_game, (255,255,255), self.rect)
+        pass
+
+wall_group2 = pygame.sprite.Group()
+
 # Создание экземпляров floor
-print(Map)
-for i in range(-2, 8):
-    for j in range(-3, 7):
-        if Map[j + 3][i + 2] == 0:
+for i in range(-4, 8):
+    for j in range(-5, 7):
+        if Map[i + 4][j + 5] == 0:
             # Создаём экземпляр floor в каждой позиции (i, j)
             new_floor = floor()
             new_floor.rect.x = i * 200
@@ -345,12 +420,17 @@ for i in range(-2, 8):
             floor_group.add(new_floor)
         else:
             new_wall = wall()
-            new_wall.rect.x = i * 200
-            new_wall.rect.y = j * 200
+            new_wall.rect.x = i * 200 + 50
+            new_wall.rect.y = j * 200 + 15
             # Добавляем в группу спрайтов
-            wall_group.add(new_wall)
 
-#Надо сделать нормальные стены по бокам
+            new_wall1 = wall1()
+            new_wall1.rect.x = i * 200
+            new_wall1.rect.y = j * 200
+            # Добавляем в группу спрайтов
+            wall_group1.add(new_wall1)
+
+
 class Chest(pygame.sprite.Sprite):
     pass
 
@@ -360,20 +440,20 @@ horizontal_borders = pygame.sprite.Group()
 vertical_borders = pygame.sprite.Group()
 
 play = False
-
-# for i in range(3):
-#for i in range(3):
-#    Evil(250)
+for i in range(3):
+    Evil(250, wall_group)
 hero = Hero(999999999999999, wall_group)
 schet_fps = 0
 schet_anim = 0
 schet_attack_anim = 0
 schet_attack_fps = 1
+schet_fps_bullet = 0
 x_pos = 0
 y_pos = 0
 
 # главный цикл
 while running:
+    bullets = []
     if play:
         pk = pygame.key.get_pressed()
         clock.tick(FPS)
@@ -386,6 +466,16 @@ while running:
                 if event.button == 1:
                     shooting_sound.play()
                     hero.attack = True
+                if event.button == 3 and schet_fps_bullet // 20 > 0:
+                    mouse_pos = pygame.mouse.get_pos()
+                    center_x, center_y = hero.rect.center
+                    direction_x, direction_y = mouse_pos[0] - center_x, mouse_pos[1] - center_y
+                    distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
+                    direction_x /= distance
+                    direction_y /= distance
+                    schet_fps_bullet -= 25
+                    Bullet(screen_game, center_x - 25, center_y, direction_x, direction_y)
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     play = False
@@ -423,21 +513,19 @@ while running:
             camera.apply(sprite)
         all_sprites.draw(screen_game)
         all_sprites.update()
+
         schet_fps += 1
         if schet_fps % 2 == 0:
             schet_anim += 1
-        if hero.attack:
-            schet_attack_fps += 1
-        if schet_attack_fps % 3 == 0:
-            schet_attack_anim += 1
         if schet_anim >= 6:
             schet_anim = 0
         if not pygame.mixer.get_busy():
             hero.attack = False
-        if schet_attack_anim >= 4:
-            schet_attack_anim = 0
-        if not hero.attack:
-            schet_attack_anim = 0
+
+        if schet_fps_bullet <= 250:
+            schet_fps_bullet += 2
+        pygame.draw.rect(screen_game, (200, 0, 0),
+                         (0, 25, schet_fps_bullet, 25))
         pygame.draw.rect(screen_game, (0, 200, 0),
                          (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
         pygame.display.update()
@@ -484,5 +572,4 @@ while running:
         screen.update(time_delta)
         screen.draw_ui(window)
         pygame.display.update()
-
 

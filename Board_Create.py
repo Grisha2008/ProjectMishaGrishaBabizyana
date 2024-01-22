@@ -5,7 +5,7 @@ import random
 matrix = np.zeros((10, 10), dtype=int)
 center_coords = [(4, 4), (4, 5), (5, 4), (5, 5)] # Центральные клетки
 directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-num_ones = random.randint(10, 20)
+num_ones = random.randint(10, 36)
 
 # Функция для проверки пути до центра
 def is_path_to_center(matrix, center_coords):
@@ -40,3 +40,17 @@ while not valid_matrix:
             matrix[x][y] = 1
             ones_placed += 1
     valid_matrix = is_path_to_center(matrix, center_coords)
+matr = matrix
+matrix = []
+for i in range(12):
+    if i == 0:
+        matrix.append([1] * 12)
+    elif i == 11:
+        matrix.append([1] * 12)
+    else:
+        matrix.append([])
+        matrix[i].append(1)
+        for k in matr[i - 1]:
+            matrix[i].append(k)
+        matrix[i].append(1)
+
