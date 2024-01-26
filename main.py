@@ -118,8 +118,7 @@ all_sprites = pygame.sprite.Group()
 fullscreen = False
 
 Map = Board_Create.matrix
-for i in Map:
-    print(i)
+print(Map)
 
 class Camera:
     # зададим начальный сдвиг камеры
@@ -434,8 +433,8 @@ class wall1(pygame.sprite.Sprite):
 wall_group2 = pygame.sprite.Group()
 
 # Создание экземпляров floor
-for i in range(-4, 8):
-    for j in range(-5, 7):
+for i in range(-4, 6):
+    for j in range(-5, 5):
         if Map[i + 4][j + 5] == 0:
             # Создаём экземпляр floor в каждой позиции (i, j)
             new_floor = floor()
