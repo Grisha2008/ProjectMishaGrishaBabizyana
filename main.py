@@ -3,6 +3,10 @@ import pygame_gui
 import Board_Create
 from random import randint
 import math
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QListWidget, QDialog, QLineEdit
+import PyQt5.QtWidgets
+import sys
+
 
 pygame.init()
 pygame.mixer.init()
@@ -49,18 +53,77 @@ exit_button = pygame_gui.elements.UIButton(relative_rect=pygame.Rect((100, 400),
                                            manager=screen)
 volume_slider = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((700, 100), (350, 100)),
                                                        start_value=vol, value_range=(0, 1), manager=screen)
-fps_slider = pygame_gui.elements.UIHorizontalSlider(relative_rect=pygame.Rect((700, 400), (350, 100)), start_value=fps,
-                                                    value_range=(20, 120), manager=screen)
-
 # Подписи к слайдерам
 volume_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((500, 100), (200, 100)), text='Громкость',
                                            manager=screen)
-fps_label = pygame_gui.elements.UILabel(relative_rect=pygame.Rect((500, 400), (200, 100)), text='FPS', manager=screen)
+qt_button = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((700, 400), (300, 100)),
+    text='Открыть PyQt',
+    manager=screen
+)
 
+custom_map_button = pygame_gui.elements.UIButton(
+    relative_rect=pygame.Rect((100, 250), (300, 100)),
+    text='Custom Map',
+    manager=screen
+)
 running = True
 
 static = 1
 
+import pygame
+import numpy as np
+
+# Инициализация Pygame
+pygame.init()
+
+# Размеры окна
+width, height = 1080, 720
+window = pygame.display.set_mode((width, height))
+
+# Размеры клетки, кнопки и поля для текста
+cell_size = 60  # Рассчитываем размер клетки исходя из ширины окна
+button_height = 50
+text_input_height = 50
+matrix_height = cell_size * 9  # Высота матрицы
+
+# Создание матрицы 9x9 с использованием NumPy
+matrix = np.zeros((9, 9), dtype=int)
+
+# Счетчик белых клеток
+white_cells_count = 0
+
+# Функция для отрисовки матрицы
+def draw_matrix(win, matrix):
+    for row in range(matrix.shape[0]):
+        for col in range(matrix.shape[1]):
+            color = (255, 255, 255) if matrix[row, col] == 1 else (0, 0, 0)
+            pygame.draw.rect(win, color, (col * cell_size, row * cell_size, cell_size, cell_size))
+            pygame.draw.rect(win, (128, 128, 128), (col * cell_size, row * cell_size, cell_size, cell_size), 1)
+
+# Функция для отрисовки кнопки
+def draw_button(win, text, y, height):
+    pygame.draw.rect(win, (200, 200, 200), (0, y, width, height))
+    font = pygame.font.SysFont(None, 36)
+    text_surf = font.render(text, True, (0, 0, 0))
+    text_rect = text_surf.get_rect(center=(width // 2, y + height // 2))
+    win.blit(text_surf, text_rect)
+
+# Функция для сохранения матрицы
+def save_matrix(matrix, map_name):
+    with open('Maps.txt', 'a') as file:
+        file.write(f'{map_name}: {np.array2string(matrix, separator=", ")}\n')
+
+# Инициализация поля для ввода текста
+font = pygame.font.Font(None, 36)
+text = ''
+input_rect = pygame.Rect(50, height - text_input_height - 100, width - 100, text_input_height)
+color_active = pygame.Color('lightskyblue3')
+color_passive = pygame.Color('gray15')
+color = color_passive
+active = False
+
+Custom_map = False
 
 def text(screen, text1):
     font = pygame.font.SysFont('', 60)
@@ -140,7 +203,108 @@ class Camera:
 
 camera = Camera()
 
+class MapsWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Выбор карты")
+        self.setGeometry(100, 100, 600, 400)
 
+        layout = QVBoxLayout()
+        self.listWidget = QListWidget()
+        self.load_maps()
+
+        self.selectButton = QPushButton("Выбрать карту")
+        self.selectButton.clicked.connect(self.select_map)
+        self.deleteButton = QPushButton("Удалить карту")
+        self.deleteButton.clicked.connect(self.delete_map)
+
+        layout.addWidget(self.listWidget)
+        layout.addWidget(self.selectButton)
+        layout.addWidget(self.deleteButton)
+
+        container = QWidget()
+        container.setLayout(layout)
+
+        self.setCentralWidget(container)
+
+    def load_maps(self):
+        with open('Maps.txt', 'r') as file:
+            self.listWidget.clear()
+            for line in file:
+                self.listWidget.addItem(line.strip())
+
+    def select_map(self):
+        global matrix, play, running # Обращаемся к глобальной переменной
+        selected_map = self.listWidget.currentItem().text()
+        map_name, map_data = selected_map.split(': ')
+        print("Выбрана карта:", map_name)
+        # Преобразование строки данных матрицы обратно в массив NumPy
+        matrix = np.fromstring(map_data.replace('[', '').replace(']', ''), sep=', ', dtype=int).reshape(9, 9)
+        if matrix:
+            play = True
+        else:
+            running = False
+
+    def closeEvent(self, event):
+        # Игнорируем событие закрытия, просто скрываем окно
+        self.hide()
+        event.ignore()
+
+
+    def delete_map(self):
+        # Здесь код для удаления карты
+        currentRow = self.listWidget.currentRow()
+        if currentRow >= 0:
+            self.listWidget.takeItem(currentRow)
+
+def open_maps_window():
+    if __name__ == '__main__':
+        app = PyQt5.QtWidgets.QApplication(sys.argv)
+        app.setQuitOnLastWindowClosed(False)
+        Mapswindow = MapsWindow()
+        Mapswindow.show()
+        sys.exit(app.exec_())
+# Запуск PyQt приложения
+
+class SaveMapDialog(QDialog):
+    def __init__(self, matrix, parent=None):
+        super().__init__(parent)
+        self.matrix = matrix
+        self.setWindowTitle("Сохранение карты")
+
+        self.layout = QVBoxLayout(self)
+
+        self.name_input = QLineEdit(self)
+        self.name_input.setPlaceholderText("Введите название карты")
+        self.layout.addWidget(self.name_input)
+
+        self.save_button = QPushButton("Сохранить", self)
+        self.save_button.clicked.connect(self.save_map)
+        self.layout.addWidget(self.save_button)
+
+    def save_map(self):
+        map_name = self.name_input.text()
+        save_matrix(self.matrix, map_name)
+        self.close()
+
+
+def save_matrix(matrix, map_name):
+    with open('Maps.txt', 'a') as file:
+        matrix_change = []
+        for i in range(len(matrix)):
+            matrix_change.append([])
+            for k in matrix[i]:
+                matrix_change[i].append(k)
+        matrix = matrix_change
+        print(matrix)
+        file.write(f'{map_name}: {str(matrix)}\n')
+
+
+# Функция для открытия диалога сохранения карты
+def open_save_dialog(matrix):
+    app = QApplication(sys.argv)
+    dialog = SaveMapDialog(matrix)
+    dialog.exec_()
 # hero
 class Hero(pygame.sprite.Sprite):
     image = get_animation(pygame.image.load(f'Mobs/Player.png'), 48, 48, 0, 0)
@@ -315,7 +479,7 @@ class Evil(pygame.sprite.Sprite):
         # мерием расстояние от героя до злодея
         if get_distance(hero.get_cords(), self.get_cords()) <= 100 and not hero.attack:
             hero.hero_helth -= 1
-        
+
         if pygame.sprite.spritecollide(self, bullet_group, True, pygame.sprite.collide_mask):
             self.evil_helth -= DAMAGE
 
@@ -406,7 +570,7 @@ class wall1(pygame.sprite.Sprite):
         self.image = wall1.image
         self.rect = self.image.get_rect()
         #self.mask = pygame.mask.from_surface(self.image)
-        
+
     def update(self):
         # pygame.draw.rect(screen_game, (255,255,255), self.rect)
         pass
@@ -450,7 +614,7 @@ for i in range(-4, 6):
             new_wall1 = wall1()
             new_wall1.rect.x = i * 200
             new_wall1.rect.y = j * 200
-            new_wall1.rect.x = i * 200 
+            new_wall1.rect.x = i * 200
             new_wall1.rect.y = j * 200
             # Добавляем в группу спрайтов
             wall_group1.add(new_wall1)
@@ -582,6 +746,47 @@ while running:
         pygame.draw.rect(screen_game, (0, 200, 0),
                          (0, 0, 200 - (hero.hero_helth_max - hero.hero_helth) * 2, 25))
         pygame.display.update()
+    elif Custom_map == True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                if input_rect.collidepoint(event.pos):
+                    active = not active
+                else:
+                    active = False
+                color = color_active if active else color_passive
+                try:
+                    if y < matrix_height and x < matrix_height:  # Проверка, что клик был в пределах матрицы
+                        print(y)
+                        col, row = x // cell_size, y // cell_size
+                        if (row, col) != (4, 4):  # Исключаем центральную клетку
+                            if matrix[row, col] == 0 and white_cells_count < 25:
+                                matrix[row, col] = 1
+                                white_cells_count += 1
+                            elif matrix[row, col] == 1:
+                                matrix[row, col] = 0
+                                white_cells_count -= 1
+                    elif y >= height - button_height - 10:  # Клик по кнопке "Сохранить"
+                        open_save_dialog(matrix)
+                        Custom_map = False
+                except Exception:
+                    pass
+            if event.type == pygame.KEYDOWN:
+                if active:
+                    if event.key == pygame.K_RETURN:
+                        print(text)
+                    elif event.key == pygame.K_BACKSPACE:
+                        text = text[:-1]
+                    else:
+                        text += event.unicode
+
+        window.fill((0, 0, 0))
+        draw_matrix(window, matrix)
+        draw_button(window, "Сохранить", height - button_height - 10, button_height)
+
+        pygame.display.flip()
     else:
         time_delta = clock.tick(fps) / 1000.0
         for event in pygame.event.get():
@@ -602,13 +807,16 @@ while running:
                     play = True
                     pygame.mixer.music.load('PlayArrow_-_Chipi-Chipi-Chapa-Chapa_77099952.mp3')
                     pygame.mixer.music.play(-1)
+                elif event.ui_element == custom_map_button:
+                    Custom_map = True
+                elif event.type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == qt_button:
+                        open_maps_window()
 
             if event.type == pygame_gui.UI_HORIZONTAL_SLIDER_MOVED:
                 if event.ui_element == volume_slider:
                     vol = event.value
                     pygame.mixer.music.set_volume(vol)
-                elif event.ui_element == fps_slider:
-                    fps = event.value
 
             screen.process_events(event)
 
