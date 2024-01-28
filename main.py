@@ -103,7 +103,8 @@ FPS = 20
 WIDTH = 1080
 HIGHT = 720
 SPEED = 12
-DAMAGE = 20
+DAMAGE = 100
+SCORE = 0
 x = WIDTH / 2
 y = HIGHT / 2
 # здесь происходит инициация, создание объектов и др.
@@ -252,15 +253,12 @@ class Evil(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.evil_helth = evil_helth_max
         self.evil_helth_max = evil_helth_max
-
-        self.rect.x = randint(WIDTH // 2, (WIDTH // 2) * 4)
-        self.rect.y = randint(HIGHT // 2, (HIGHT // 2) * 4)
         self.walls = wall_group1
         self.dx = 0
         self.dy = 0
 
-        self.rect.x = randint(WIDTH// 2, (WIDTH // 2) * 3)
-        self.rect.y = randint(HIGHT// 2, (HIGHT // 2) * 3)
+        self.rect.x = randint(WIDTH// 2 - 300, (WIDTH // 2) + 300)
+        self.rect.y = randint(HIGHT// 2 - 300, (HIGHT // 2) + 300)
         self.walls = wall_group1
         self.dx = 0
         self.dy = 0
@@ -290,6 +288,7 @@ class Evil(pygame.sprite.Sprite):
                         wall.rect.bottom for wall in pygame.sprite.spritecollide(self, self.walls, False))
 
     def update(self):
+        global SCORE
         # Перемещение с учетом столкновений
         self.movement(self.dx, self.dy)
         self.dx, self.dy = 0, 0
@@ -311,6 +310,7 @@ class Evil(pygame.sprite.Sprite):
         self.movement(self.dx, self.dy)
 
         if self.evil_helth <= 0:
+            SCORE += 1
             self.kill()
 
         # мерием расстояние от героя до злодея
@@ -318,10 +318,7 @@ class Evil(pygame.sprite.Sprite):
             hero.hero_helth -= 1
         
         if pygame.sprite.spritecollide(self, bullet_group, True, pygame.sprite.collide_mask):
-            self.evil_helth -= 10
-
-        if pygame.sprite.spritecollide(self, bullet_group, True, pygame.sprite.collide_mask):
-            self.evil_helth -= 10
+            self.evil_helth -= DAMAGE
 
         # Hit bar злодея
         if self.evil_helth >= 0:
@@ -468,7 +465,7 @@ vertical_borders = pygame.sprite.Group()
 play = False
 for i in range(3):
     Evil(250, wall_group)
-hero = Hero(999999999999999, wall_group)
+hero = Hero(100, wall_group)
 schet_fps = 0
 schet_anim = 0
 schet_attack_anim = 0
@@ -514,8 +511,21 @@ while running:
                         window = pygame.display.set_mode(window_size, pygame.FULLSCREEN)
                     else:
                         window = pygame.display.set_mode(window_size)
+
+
+
         if not pygame.mixer.get_busy():
             hero.attack = False
+
+        if hero.hero_helth <= 0:
+            best_score = open('best_score.txt')
+            if int(best_score.read()) < SCORE:
+                best_score.close()
+                best_score = open('best_score.txt', 'w')
+                best_score.write(str(SCORE))
+                best_score.close()
+            running = False
+
 
         if pk[pygame.K_a]:
             static = 3
@@ -538,6 +548,7 @@ while running:
         for sprite in all_sprites:
             camera.apply(sprite)
         all_sprites.draw(screen_game)
+        screen_game.blit(pygame.font.Font(None, 36).render(f'score: {SCORE}', True, (180, 0, 0)), (10, 50))
         all_sprites.update()
 
         schet_fps += 1
