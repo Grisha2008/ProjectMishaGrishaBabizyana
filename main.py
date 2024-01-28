@@ -192,9 +192,8 @@ class Hero(pygame.sprite.Sprite):
     def move(self):
         keys = pygame.key.get_pressed()
         if self.attack:
-            print(schet_attack_anim)
-            self.image = self.attack_animations[static][schet_attack_anim]
-        if not keys[pygame.K_a] and not keys[pygame.K_d] and not keys[pygame.K_w] and not keys[pygame.K_s]:
+            self.image = self.attack_animations[(static_anim - 1) % 4][attack_anim]
+        elif not keys[pygame.K_a] and not keys[pygame.K_d] and not keys[pygame.K_w] and not keys[pygame.K_s]:
             self.image = self.static_animations[static][schet_anim]
         else:
             self.image = self.animations[static][schet_anim]
@@ -293,16 +292,16 @@ class Evil(pygame.sprite.Sprite):
         self.movement(self.dx, self.dy)
         self.dx, self.dy = 0, 0
         if hero.rect.y > self.rect.y - 36:
-            self.dy += 4
+            self.dy += 2
         elif hero.rect.y < self.rect.y - 36:
-            self.dy -= 4
+            self.dy -= 2
         if hero.rect.x > self.rect.x - 32:
-            self.dx += 4
+            self.dx += 2
             if self.direction != "left":
                 self.image = pygame.transform.flip(self.image, True, False)
                 self.direction = "left"
         elif hero.rect.x < self.rect.x - 32:
-            self.dx -= 4
+            self.dx -= 2
             if self.direction != "right":
                 self.image = pygame.transform.flip(self.image, True, False)
                 self.direction = "right"
@@ -314,10 +313,13 @@ class Evil(pygame.sprite.Sprite):
             self.kill()
 
         # мерием расстояние от героя до злодея
-        if get_distance(hero.get_cords(), self.get_cords()) <= 100:
+        if get_distance(hero.get_cords(), self.get_cords()) <= 100 and not hero.attack:
             hero.hero_helth -= 1
         
         if pygame.sprite.spritecollide(self, bullet_group, True, pygame.sprite.collide_mask):
+            self.evil_helth -= DAMAGE
+
+        if get_distance(hero.get_cords(), self.get_cords()) <= 150 and hero.attack and attack_check <= 1:
             self.evil_helth -= DAMAGE
 
         # Hit bar злодея
@@ -468,9 +470,10 @@ for i in range(3):
 hero = Hero(100, wall_group)
 schet_fps = 0
 schet_anim = 0
-schet_attack_anim = 0
-schet_attack_fps = 1
+attack_anim = 0
+attack_fps = 1
 schet_fps_bullet = 0
+attack_check = 0
 x_pos = 0
 y_pos = 0
 
@@ -486,17 +489,14 @@ while running:
                 running = False
                 play = False
             if event.type == pygame.MOUSEBUTTONDOWN and not pygame.mixer.get_busy():
-                if event.button == 1:
-                    shooting_sound.play()
-                    hero.attack = True
-                if event.button == 3 and schet_fps_bullet // 20 > 0:
+                if event.button == 3 and schet_fps_bullet >= 100:
                     mouse_pos = pygame.mouse.get_pos()
                     center_x, center_y = hero.rect.center
                     direction_x, direction_y = mouse_pos[0] - center_x, mouse_pos[1] - center_y
                     distance = math.sqrt(direction_x ** 2 + direction_y ** 2)
                     direction_x /= distance
                     direction_y /= distance
-                    schet_fps_bullet -= 25
+                    schet_fps_bullet -= 100
                     Bullet(screen_game, center_x - 25, center_y, direction_x, direction_y)
 
             if event.type == pygame.KEYDOWN:
@@ -505,6 +505,11 @@ while running:
                     pygame.mixer.music.load('Music.mp3')
                     pygame.mixer.music.play(-1)
                     vol = 0.1
+                if event.key == pygame.K_SPACE and not hero.attack:
+                    shooting_sound.play()
+                    hero.attack = True
+                    attack_check = 0
+                    static_anim = static
                 if event.key == pygame.K_F11:  # Переключение между полноэкранным и оконным режимами
                     fullscreen = not fullscreen
                     if fullscreen:
@@ -512,10 +517,20 @@ while running:
                     else:
                         window = pygame.display.set_mode(window_size)
 
+        if hero.attack:
+            attack_check += 1
+            if attack_fps < 15:
+                attack_fps += 1
+                if attack_fps % 5 == 0:
+                    attack_anim += 1
+                print(attack_anim)
+            else:
+                hero.attack = False
+        else:
+            attack_anim = 0
+            attack_fps = 1
 
 
-        if not pygame.mixer.get_busy():
-            hero.attack = False
 
         if hero.hero_helth <= 0:
             best_score = open('best_score.txt')
@@ -535,6 +550,7 @@ while running:
             static = 2
         elif pk[pygame.K_s]:
             static = 0
+
 
         # background
         screen_game.fill((255, 255, 255))
@@ -559,8 +575,8 @@ while running:
         if not pygame.mixer.get_busy():
             hero.attack = False
 
-        if schet_fps_bullet <= 250:
-            schet_fps_bullet += 2
+        if schet_fps_bullet <= 300:
+            schet_fps_bullet += 3
         pygame.draw.rect(screen_game, (200, 0, 0),
                          (0, 25, schet_fps_bullet, 25))
         pygame.draw.rect(screen_game, (0, 200, 0),
