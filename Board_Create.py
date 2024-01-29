@@ -46,3 +46,4 @@ while not valid_matrix:
             matrix[x][y] = 1
             ones_placed += 1
     valid_matrix = is_path_to_center(matrix, center_coords)
+print(matrix)
