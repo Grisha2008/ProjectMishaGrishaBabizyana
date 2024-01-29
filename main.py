@@ -6,7 +6,7 @@ import math
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QListWidget, QDialog, QLineEdit
 import PyQt5.QtWidgets
 import sys
-
+import numpy as np
 
 pygame.init()
 pygame.mixer.init()
@@ -71,12 +71,6 @@ running = True
 
 static = 1
 
-import pygame
-import numpy as np
-
-# Инициализация Pygame
-pygame.init()
-
 # Размеры окна
 width, height = 1080, 720
 window = pygame.display.set_mode((width, height))
@@ -140,7 +134,6 @@ def get_animation(sheet, width, hieght, x, y):
     return image
 
 
-# Ты долбаеб?
 # def move_other(x, y):
 #    pk = pygame.key.get_pressed()
 #
@@ -170,6 +163,7 @@ DAMAGE = 100
 SCORE = 0
 x = WIDTH / 2
 y = HIGHT / 2
+
 # здесь происходит инициация, создание объектов и др.
 screen_game = pygame.display.set_mode((WIDTH, HIGHT))
 # музыка
@@ -244,12 +238,7 @@ class MapsWindow(QMainWindow):
             play = True
         else:
             running = False
-
-    def closeEvent(self, event):
-        # Игнорируем событие закрытия, просто скрываем окно
-        self.hide()
-        event.ignore()
-
+ 
 
     def delete_map(self):
         # Здесь код для удаления карты
@@ -258,12 +247,11 @@ class MapsWindow(QMainWindow):
             self.listWidget.takeItem(currentRow)
 
 def open_maps_window():
-    if __name__ == '__main__':
-        app = PyQt5.QtWidgets.QApplication(sys.argv)
-        app.setQuitOnLastWindowClosed(False)
-        Mapswindow = MapsWindow()
-        Mapswindow.show()
-        sys.exit(app.exec_())
+    app = PyQt5.QtWidgets.QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
+    Mapswindow = MapsWindow()
+    Mapswindow.show()
+    sys.exit(app.exec_())
 # Запуск PyQt приложения
 
 class SaveMapDialog(QDialog):
@@ -414,14 +402,14 @@ class Evil(pygame.sprite.Sprite):
         self.direction = "right"
         self.rect = self.image.get_rect()
         self.mask = pygame.mask.from_surface(self.image)
-        self.evil_helth = evil_helth_max
+        self.evil_helth =  evil_helth_max
         self.evil_helth_max = evil_helth_max
         self.walls = wall_group1
         self.dx = 0
         self.dy = 0
 
-        self.rect.x = randint(WIDTH// 2 - 300, (WIDTH // 2) + 300)
-        self.rect.y = randint(HIGHT// 2 - 300, (HIGHT // 2) + 300)
+        self.rect.x = 200
+        self.rect.y = 200 
         self.walls = wall_group1
         self.dx = 0
         self.dy = 0
@@ -704,6 +692,10 @@ while running:
                 best_score.write(str(SCORE))
                 best_score.close()
             running = False
+
+        if len(evil_group) == 0:
+            for i in range(3):
+                Evil(250, wall_group)
 
 
         if pk[pygame.K_a]:
