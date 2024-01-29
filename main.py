@@ -126,23 +126,6 @@ def get_animation(sheet, width, hieght, x, y):
     image = pygame.transform.scale(image, (144, 144))
     return image
 
-
-# Ты долбаеб?
-# def move_other(x, y):
-#    pk = pygame.key.get_pressed()
-#
-#    if pk[pygame.K_a]:
-#        x += SPEED
-#    elif pk[pygame.K_d]:
-#        x -= SPEED
-#    elif pk[pygame.K_w]:
-#        y += SPEED
-#    elif pk[pygame.K_s]:
-#        y -= SPEED
-#
-#
-#
-#    return x, y
 Fail = False
 
 fail_sound = pygame.mixer.Sound('4e9c206b994181f.mp3')
